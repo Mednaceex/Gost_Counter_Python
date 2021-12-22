@@ -7,7 +7,7 @@ import sys
 from pathlib import Path
 
 none = ('xx', 'хх', 'ХХ', 'XX', '__', '--', '_', '//', '/', '', 'None')
-n = 10  # количество матчей в госте
+match_count = 10
 player_count = 20
 long_seps = (' -:- ', '—:—', ' -:-', '-:- ', '-:-')
 seps = ('-', '—')
@@ -187,7 +187,7 @@ def count_goals(name, bets_list, scores_list, betters_list):
     :param betters_list: список игроков (объектов класса Better)
     """
     goals = 0
-    bets = ['None'] * n
+    bets = ['None'] * match_count
     for i, bet in enumerate(bets_list):
         if bet in none:
             bets[i] = 'None'
@@ -251,20 +251,21 @@ def find_bet(text: str):
     return array
 
 
-def config_bets_array(text: str, missing: list):
+def config_bets_array(text: str, missing: list, count=match_count):
     """
     Считывает ставки из текста госта, присланного игроком
 
     :param text: текст госта
-    :param missing: массив из n элементов - True (ставка отсутствует) или False (ставка есть)
+    :param missing: массив из count элементов - True (ставка отсутствует) или False (ставка есть)
+    :param count: количество матчей в госте
     :return: количество ставок в случае ошибки в госте, иначе массив ставок игрока
     """
     bets_array = find_bet(text)
     array = []
     error = False
     length = len(bets_array)
-    if n <= length:
-        for i in range(n):
+    if count <= length:
+        for i in range(count):
             array.append(bets_array[i])
         for i, missing_match in enumerate(missing):
             if missing_match:
@@ -372,7 +373,7 @@ class Window(QtWidgets.QMainWindow):
         with open(checks_txt, 'w') as checks:
             check_box = [self.ui.Check_1_1]
             for i in range(player_count):
-                for j in range(n):
+                for j in range(match_count):
                     exec(f'check_box[{0}] = self.ui.Check_{i + 1}_{j + 1}')
                     if check_box[0].isChecked():
                         print(1, end='', file=checks)
@@ -464,10 +465,10 @@ class Window(QtWidgets.QMainWindow):
         :param name: название команды
         :return: список из значений True (матч пропущен) или False (матч присутствует)
         """
-        array = [True] * n
+        array = [True] * match_count
         for bet_text in self.bet_texts:
             if bet_text.name == name:
-                for i in range(n):
+                for i in range(match_count):
                     exec(f'array[{i}] = self.ui.Check_{bet_text.number}_{i + 1}.isChecked()')
         return array
 
@@ -505,7 +506,7 @@ class Window(QtWidgets.QMainWindow):
         with open(checks_txt, 'r') as checks:
             text = checks.readlines()
             for i in range(player_count):
-                for j in range(n):
+                for j in range(match_count):
                     if text[i][j] == '1':
                         exec(f'self.ui.Check_{i + 1}_{j + 1}.setCheckState(QtCore.Qt.Checked)')
 
@@ -517,8 +518,8 @@ class Window(QtWidgets.QMainWindow):
         :return: список счетов матчей
         Каждый элемент возвращаемого списка - список из 2 чисел - ставок на 1 и 2 команды
         """
-        scores = ['None'] * n
-        for i in range(n):
+        scores = ['None'] * match_count
+        for i in range(match_count):
             exec(f'scores[{i}] = [check_ascii(self.ui.Score_{i + 1}_1.text()),'
                  f'check_ascii(self.ui.Score_{i + 1}_2.text())]')
             if scores[i][0] in none or scores[i][1] in none:
@@ -531,7 +532,7 @@ class Window(QtWidgets.QMainWindow):
         Возвращает счета матчей в текстовом виде для сохранения в файл
         """
         text = ''
-        for i in range(n):
+        for i in range(match_count):
             score = [''] * 2
             for j in range(2):
                 exec(f'score[{j}] = check_ascii(self.ui.Score_{i + 1}_{j + 1}.text())')
@@ -545,7 +546,7 @@ class Window(QtWidgets.QMainWindow):
         Очищает поля для ввода счетов матчей
         """
         empty = ''
-        for i in range(n):
+        for i in range(match_count):
             for j in range(2):
                 exec(f'self.ui.Score_{i + 1}_{j + 1}.setText(empty)')
 
@@ -555,7 +556,7 @@ class Window(QtWidgets.QMainWindow):
         Снимает все галочки
         """
         for i in range(player_count):
-            for j in range(n):
+            for j in range(match_count):
                 exec(f'self.ui.Check_{i + 1}_{j + 1}.setCheckState(QtCore.Qt.Unchecked)')
 
     # noinspection PyMethodMayBeStatic
@@ -565,9 +566,9 @@ class Window(QtWidgets.QMainWindow):
 
         :param line_array: список счетов матчей (по 1 числу в каждой строке, на 1 матч должно выделяться 2 строки)
         """
-        if len(line_array) == n * 2:
+        if len(line_array) == match_count * 2:
             for line in line_array:
-                for i in range(n):
+                for i in range(match_count):
                     for j in range(2):
                         exec(f'self.ui.Score_{i + 1}_{j + 1}.setText(get_rid_of_slash_n(line_array[2 * i + {j}]))')
 
@@ -582,7 +583,7 @@ class Window(QtWidgets.QMainWindow):
             while text[i] != end_symbol:
                 score_array.append(text[i])
                 i += 1
-        if len(score_array) == 2 * n:
+        if len(score_array) == 2 * match_count:
             self.set_scores(score_array)
         else:
             print(len(score_array))
