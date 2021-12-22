@@ -766,7 +766,6 @@ class Results(Dialog):
         self.ui.Errors.setPlainText(error_text)
 
 
-
 def main():
     app = QtWidgets.QApplication([])
     application = Window()
