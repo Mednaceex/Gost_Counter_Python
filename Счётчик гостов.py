@@ -1,10 +1,11 @@
+import sys
+from pathlib import Path
 from PyQt5 import QtWidgets, QtCore
+
 from modules.window import Ui_MainWindow
 from modules.matches import Ui_Dialog
 from modules.teams import Ui_Dialog as Ui_Dialog_2
 from modules.results import Ui_Dialog as Ui_Dialog_3
-import sys
-from pathlib import Path
 
 none = ('xx', 'хх', 'ХХ', 'XX', '__', '--', '_', '//', '/', '', 'None')
 match_count = 10
@@ -14,12 +15,12 @@ seps = ('-', '—')
 numbers = ('1', '2', '3', '4', '5', '6', '7', '8', '9', '0')
 end_symbol = '//'
 
-saved_txt = Path('txt', 'saved.txt')
-errors_txt = Path('txt', 'errors.txt')
-checks_txt = Path('txt', 'checks.txt')
-matches_txt = Path('txt', 'matches.txt')
-output_txt = Path('txt', 'output.txt')
-players_txt = Path('txt', 'players.txt')
+saved_txt = Path('data', 'saved.txt')
+errors_txt = Path('data', 'errors.txt')
+checks_txt = Path('data', 'checks.txt')
+matches_txt = Path('data', 'matches.txt')
+output_txt = Path('data', 'output.txt')
+players_txt = Path('data', 'players.txt')
 
 
 class Better:
@@ -643,6 +644,7 @@ class Matches(Dialog):
     def config_teams(self, names):
         """
         Обновляет выпадающий список команд в окне настройки матчей
+
         :param names: список названий команд
         """
         for i in range(int(player_count / 2)):
@@ -742,6 +744,7 @@ class Results(Dialog):
     def show_copied(self, boolean):
         """
         Отображает надпись "Скопировано" или скрывает её
+
         :param boolean: переменная логического типа, определяет, нужно ли показывать надпись "Скопировано"
         """
         if boolean:
