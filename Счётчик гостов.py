@@ -213,7 +213,7 @@ def count_goals(name, bets_list, scores_list, betters_list):
             i.set_goals(goals)
 
 
-def get_matches(line, output_file, betters_list):
+def get_match(line, output_file, betters_list):
     """
     Считывает матч из строки расписания и выводит его счёт в файл вывода
 
@@ -236,16 +236,13 @@ def get_matches(line, output_file, betters_list):
         print(name[0], f'{g[0]}-{g[1]}', name[1], file=output_file)
 
 
-def find_bet(text: str):
+def bets_from_text(text: str):
     """
-    Ищет ставки игрока в тексте госта, возвращает массив с ними
-    Каждый элемент возвращаемого массива - список из 2 чисел - ставок на 1 и 2 команды
+    Ищет ставки игрока, разделённые символом ":", в тексте госта и возвращает список с ними
+
+    :return: Список найденных ставок, каждый элемент которого - список из 2 чисел - ставок на 1 и 2 команды
     """
     array = []
-    for string in long_seps:
-        text = text.replace(string, ':')
-    for string in seps:
-        text = text.replace(string, ':')
     for i, character in enumerate(text):
         if character == ':' and 0 < i < len(text)-1:
             if text[i-1] in numbers and text[i+1] in numbers:
@@ -263,14 +260,27 @@ def find_bet(text: str):
     return array
 
 
+def find_bet(text: str):
+    """
+    Ищет ставки игрока, разделённые одним из допустимых символов или строк, в тексте госта и возвращает список с ними
+
+    :return: Список найденных ставок, каждый элемент которого - список из 2 чисел - ставок на 1 и 2 команды
+    """
+    for string in long_seps:
+        text = text.replace(string, ':')
+    for string in seps:
+        text = text.replace(string, ':')
+    return bets_from_text(text)
+
+
 def config_bets_array(text: str, missing: list, count=match_count):
     """
     Считывает ставки из текста госта, присланного игроком
 
     :param text: текст госта
-    :param missing: массив из count элементов - True (ставка отсутствует) или False (ставка есть)
+    :param missing: список из count элементов - True (ставка отсутствует) или False (ставка есть)
     :param count: количество матчей в госте
-    :return: количество ставок в случае ошибки в госте, иначе массив ставок игрока
+    :return: количество ставок в случае ошибки в госте, иначе список ставок игрока
     """
     bets_array = find_bet(text)
     array = []
@@ -372,7 +382,7 @@ class Window(QtWidgets.QMainWindow):
 
     def save(self):
         """
-        Созраняет введённые значения в соответствующие файлы
+        Сохраняет введённые значения в соответствующие файлы
         """
         with open(saved_txt, 'w') as saved:
             print(self.save_scores(), file=saved)
@@ -381,16 +391,7 @@ class Window(QtWidgets.QMainWindow):
                 print(bet_text.name, file=saved)
                 print(text, file=saved)
                 print(end_symbol, file=saved)
-        with open(checks_txt, 'w') as checks:
-            check_box = [self.ui.Check_1_1]
-            for i in range(player_count):
-                for j in range(match_count):
-                    exec(f'check_box[{0}] = self.ui.Check_{i + 1}_{j + 1}')
-                    if check_box[0].isChecked():
-                        print(1, end='', file=checks)
-                    else:
-                        print(0, end='', file=checks)
-                print('', file=checks)
+        self.save_checks(checks_txt)
 
     def count(self):
         """
@@ -400,7 +401,7 @@ class Window(QtWidgets.QMainWindow):
         scores = self.get_scores()
         errors = self.get_goals_and_errors(scores)
         self.save_results()
-        self.save_errors(errors, errors_txt)
+        self.save_errors(errors, errors_txt, self.matches.check_repeats())
         self.results.show_copied(False)
         self.results.print_results()
         self.results.show()
@@ -413,6 +414,23 @@ class Window(QtWidgets.QMainWindow):
         self.clear_checks()
         for bet_text in self.bet_texts:
             bet_text.text.setPlainText('')
+
+    def save_checks(self, file):
+        """
+        Сохраняет данные о нажатых галочках в файл
+
+        :param file: путь к файлу
+        """
+        with open(file, 'w') as checks:
+            check_box = [self.ui.Check_1_1]
+            for i in range(player_count):
+                for j in range(match_count):
+                    exec(f'check_box[{0}] = self.ui.Check_{i + 1}_{j + 1}')
+                    if check_box[0].isChecked():
+                        print(1, end='', file=checks)
+                    else:
+                        print(0, end='', file=checks)
+                print('', file=checks)
 
     def get_goals_and_errors(self, scores):
         """
@@ -449,17 +467,20 @@ class Window(QtWidgets.QMainWindow):
                 text = matches.readlines()
                 for line in text:
                     if line != '\n':
-                        get_matches(line, output, self.betters)
+                        get_match(line, output, self.betters)
 
     @staticmethod
-    def save_errors(errors_list: list[Error], output_file):
+    def save_errors(errors_list: list[Error], output_file, repeats=False):
         """
         Генерирует сообщения об ошибках в гостах на основе полученного списка ошибок и сохраняет их в файл
 
         :param errors_list: список ошибок в гостах (объектов класса Error)
         :param output_file: путь к файлу вывода сообщений об ошибках
+        :param repeats: определяет, есть ли повторяющиеся команды в расписании матчей
         """
         with open(output_file, 'w') as output:
+            if repeats:
+                print('Ошибка в расписании: есть повторяющиеся команды\n', file=output)
             if errors_list:
                 for error in errors_list:
                     count = f'({error.number} став'
@@ -641,7 +662,9 @@ class Matches(Dialog):
     # noinspection PyMethodMayBeStatic
     def save_matches(self, file):
         """
-        Сохраняет данные о матчах в файл
+        Сохраняет данные о матчах в файл, создаёт сообщение об ошибке в случае
+
+        :param file: путь к файлу
         """
         text = ''
         for i in range(int(player_count / 2)):
@@ -653,6 +676,19 @@ class Matches(Dialog):
             text += name[0] + ' - ' + name[1]
         with open(file, 'w') as matches:
             print(text, file=matches, end='')
+
+    # noinspection PyMethodMayBeStatic
+    def check_repeats(self):
+        """
+        Проверяет наличие повторяющихся команд в настроенном расписании
+
+        :return: True, если повторения есть, False иначе
+        """
+        teams = [''] * player_count
+        for i in range(int(player_count / 2)):
+            for j in range(2):
+                exec(f'teams[{2 * i + j}] = self.ui.Team_{i + 1}_{j + 1}.currentText()')
+        return False if len(set(teams)) == player_count else True
 
     @staticmethod
     def read_teams():

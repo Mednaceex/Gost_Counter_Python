@@ -129,5 +129,12 @@ dmypy.json
 .pyre/
 
 .idea/
+
 backups/
 UI Designer
+
+data/checks.txt
+data/saved.txt
+data/errors.txt
+data/matches.txt
+data/output.txt
