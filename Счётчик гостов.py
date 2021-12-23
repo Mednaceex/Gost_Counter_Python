@@ -59,14 +59,14 @@ class Better:
 
 def check_ascii(string: str):
     """
-    Исключает из строки все символы, не входящие в первые 127 символов таблицы ASCII
+    Исключает из строки все символы, не входящие в первые 127 символов таблицы ASCII или не являющиеся символом '—'
 
     :param string: строка
     :return: новая строка
     """
     new_string = ''
     for char in string:
-        if 0 < ord(char) < 128:
+        if 0 < ord(char) < 128 and ord(char) != ord('—'):
             new_string += char
     return new_string
 
@@ -135,6 +135,23 @@ def get_rid_of_slash_n(string: str):
     return string.replace('\n', '')
 
 
+def ending_ka(number):
+    """
+    Определяет окончания слов, заканчивающихся на "ка", употреблённых с числом
+
+    :param number: употреблённое число
+    :return: строка, на которую заменяется "ка" в конце слова
+    """
+    if 5 <= number <= 20:
+        return 'ок)'
+    elif number % 10 == 1:
+        return 'ка)'
+    elif 2 <= number % 10 <= 4:
+        return 'ки)'
+    else:
+        return 'ок)'
+
+
 def get_players(file):
     """
     Считывает названия команд и имена тренеров из файла, создаёт список объектов класса Better с этими данными
@@ -158,10 +175,7 @@ def get_names(betters_array):
     :param betters_array: список объектов класса Better
     :return: список названий команд из полученного списка
     """
-    array = []
-    for better in betters_array:
-        array.append(better.name)
-    return array
+    return [better.name for better in betters_array]
 
 
 def get_player_names(betters_array):
@@ -170,21 +184,18 @@ def get_player_names(betters_array):
 
     :param betters_array: список объектов класса Better
     :return: список названий команд с именами игроков из полученного списка
-     Формат строки в списке: Команда (Имя)
+    Формат строки в списке: Команда (Имя)
     """
-    array = []
-    for better in betters_array:
-        array.append(better.name + ' (' + better.player_name + ')')
-    return array
+    return [better.name + ' (' + better.player_name + ')' for better in betters_array]
 
 
 def count_goals(name, bets_list, scores_list, betters_list):
     """
-    Рассчитывает количество забитых игроком голов
+    Рассчитывает количество забитых игроком голов и устанавливает это значение у соответствующего объекта Better
 
     :param name: название команды
     :param bets_list: список ставок игрока
-    :param scores_list: список счетов матчей
+    :param scores_list: список счетов реальных матчей
     :param betters_list: список игроков (объектов класса Better)
     """
     goals = 0
@@ -347,7 +358,6 @@ class Window(QtWidgets.QMainWindow):
         self.teams = Teams()
         self.results = Results()
         self.bet_texts = []
-        self.score = []
         with open(players_txt, 'r') as players:
             self.betters = get_players(players)
         self.set_names(get_names(self.betters), get_player_names(self.betters))
@@ -384,44 +394,13 @@ class Window(QtWidgets.QMainWindow):
 
     def count(self):
         """
-        Рассчитывает результаты матча и выводит на экран окно с ними
+        Сохраняет введённые данные, рассчитывает результаты матча и выводит на экран окно с ними
         """
         self.save()
-        self.score = self.get_scores()
-        errors = []
-        for bet_text in self.bet_texts:
-            text = check_ascii(bet_text.text.toPlainText())
-            missing = self.get_missing(bet_text.name)
-            bets = config_bets_array(text, missing)
-            if type(bets) is not int:
-                count_goals(bet_text.name, bets, self.score, self.betters)
-            else:
-                for better in self.betters:
-                    if better.name == bet_text.name:
-                        better.goals = 0
-                errors.append(Error(bet_text.name, bets))
-
-        with open(output_txt, 'w+') as output:
-            with open(matches_txt, 'r') as matches:
-                text = matches.readlines()
-                for line in text:
-                    if line != '\n':
-                        get_matches(line, output, self.betters)
-
-        with open(errors_txt, 'w') as output:
-            if errors:
-                for error in errors:
-                    count = f'({error.number} став'
-                    if 5 <= error.number <= 20:
-                        count += 'ок)'
-                    elif error.number % 10 == 1:
-                        count += 'ка)'
-                    elif 2 <= error.number % 10 <= 4:
-                        count += 'ки)'
-                    else:
-                        count += 'ок)'
-                    print('Ошибка в госте:', error.name, count, file=output)
-
+        scores = self.get_scores()
+        errors = self.get_goals_and_errors(scores)
+        self.save_results()
+        self.save_errors(errors, errors_txt)
         self.results.show_copied(False)
         self.results.print_results()
         self.results.show()
@@ -434,6 +413,58 @@ class Window(QtWidgets.QMainWindow):
         self.clear_checks()
         for bet_text in self.bet_texts:
             bet_text.text.setPlainText('')
+
+    def get_goals_and_errors(self, scores):
+        """
+        Анализирует введённые госты на наличие ошибок
+        Считает количество забитых командами голов для корректных гостов,
+        возвращает сведения об ошибках в остальных гостах
+
+        :param scores: список счетов реальных матчей
+        :return: список ошибок в гостах (объектов класса Error)
+        """
+        errors = []
+        for bet_text in self.bet_texts:
+            text = check_ascii(bet_text.text.toPlainText())
+            missing = self.get_missing(bet_text.name)
+            bets = config_bets_array(text, missing)
+            if type(bets) is int:
+                for better in self.betters:
+                    if better.name == bet_text.name:
+                        better.goals = 0
+                errors.append(Error(bet_text.name, bets))
+            else:
+                count_goals(bet_text.name, bets, scores, self.betters)
+        return errors
+
+    def save_results(self):
+        """
+        Составляет текст с результатами матча
+        в соответствии с установленным расписанием и подсчитанным количеством голов каждой команды
+
+        Сохраняет результаты матчей в файл вывода
+        """
+        with open(output_txt, 'w+') as output:
+            with open(matches_txt, 'r') as matches:
+                text = matches.readlines()
+                for line in text:
+                    if line != '\n':
+                        get_matches(line, output, self.betters)
+
+    @staticmethod
+    def save_errors(errors_list: list[Error], output_file):
+        """
+        Генерирует сообщения об ошибках в гостах на основе полученного списка ошибок и сохраняет их в файл
+
+        :param errors_list: список ошибок в гостах (объектов класса Error)
+        :param output_file: путь к файлу вывода сообщений об ошибках
+        """
+        with open(output_file, 'w') as output:
+            if errors_list:
+                for error in errors_list:
+                    count = f'({error.number} став'
+                    count += ending_ka(error.number)
+                    print('Ошибка в госте:', error.name, count, file=output)
 
     def config_matches(self):
         """
@@ -479,9 +510,7 @@ class Window(QtWidgets.QMainWindow):
         """
         with open(saved_txt, 'r') as saved:
             saves = saved.readlines()
-            saves_text = []
-            for i, line in enumerate(saves):
-                saves_text.append(get_rid_of_slash_n(saves[i]))
+            saves_text = [get_rid_of_slash_n(saves[i]) for i, line in enumerate(saves)]
             self.open_scores(saves_text)
             i = 0
             while i < len(saves_text):
@@ -632,12 +661,9 @@ class Matches(Dialog):
 
         :return: список названий команд
         """
-        names = []
         with open(players_txt, 'r') as players:
             text = players.readlines()
-            for line in text:
-                array = split(line, ' - ')
-                names.append(array[0])
+            names = [split(line, ' - ')[0] for line in text]
         return names
 
     # noinspection PyMethodMayBeStatic
