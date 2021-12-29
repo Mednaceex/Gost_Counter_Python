@@ -1,5 +1,6 @@
 # Byte-compiled / optimized / DLL files
 __pycache__/
+windows/__pycache__/
 *.py[cod]
 *$py.class
 
@@ -138,3 +139,4 @@ data/saved.txt
 data/errors.txt
 data/matches.txt
 data/output.txt
+updates/

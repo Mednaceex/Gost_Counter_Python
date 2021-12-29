@@ -2,10 +2,11 @@ import sys
 from pathlib import Path
 from PyQt5 import QtWidgets, QtCore
 
-from modules.window import Ui_MainWindow
-from modules.matches import Ui_Dialog
-from modules.teams import Ui_Dialog as Ui_Dialog_2
-from modules.results import Ui_Dialog as Ui_Dialog_3
+from windows.main_window import Ui_MainWindow
+from windows.matches import Ui_Dialog
+from windows.teams import Ui_Dialog as Ui_Dialog_2
+from windows.results import Ui_Dialog as Ui_Dialog_3
+from windows.settings import Ui_Dialog as Ui_Dialog_4
 
 none = ('xx', 'хх', 'ХХ', 'XX', '__', '--', '_', '//', '/', '', 'None')
 match_count = 10
@@ -324,7 +325,7 @@ def print_name_error(text: str, file):
 class BetText:
     def __init__(self, name, text, number):
         """
-        Конструктор класса строк с текстом госта, присылаемого ироком
+        Конструктор класса строк с текстом госта, присылаемого игроком
 
         :param name: название команды
         :param text: текст госта
@@ -362,10 +363,10 @@ class Window(QtWidgets.QMainWindow):
         Конструктор класса главного окна
         """
         super(Window, self).__init__()
-        self.ui = Ui_MainWindow()
-        self.ui.setupUi(self)
+        self.ui = Ui_MainWindow(self)
         self.matches = Matches()
         self.teams = Teams()
+        self.settings = Settings()
         self.results = Results()
         self.bet_texts = []
         with open(players_txt, 'r') as players:
@@ -376,6 +377,7 @@ class Window(QtWidgets.QMainWindow):
 
         self.ui.Matches_Button.clicked.connect(self.config_matches)
         self.ui.Teams_Button.clicked.connect(self.config_teams)
+        self.ui.Settings_Button.clicked.connect(self.config_settings)
         self.ui.Save_Button.clicked.connect(self.save)
         self.ui.Count_Button.clicked.connect(self.count)
         self.ui.Reset_Button.clicked.connect(self.clear)
@@ -422,10 +424,10 @@ class Window(QtWidgets.QMainWindow):
         :param file: путь к файлу
         """
         with open(file, 'w') as checks:
-            check_box = [self.ui.Check_1_1]
+            check_box = [self.ui.box_list[0].checks[0]]
             for i in range(player_count):
                 for j in range(match_count):
-                    exec(f'check_box[{0}] = self.ui.Check_{i + 1}_{j + 1}')
+                    check_box[0] = self.ui.box_list[i].checks[j]
                     if check_box[0].isChecked():
                         print(1, end='', file=checks)
                     else:
@@ -499,7 +501,12 @@ class Window(QtWidgets.QMainWindow):
         """
         self.teams.show()
 
-    # noinspection PyMethodMayBeStatic
+    def config_settings(self):
+        """
+        Показывает окно настроек
+        """
+        self.settings.show()
+
     def set_names(self, name_array, player_name_array):
         """
         Устанавливает названия команд на экране, определяет список объектов класса BetText с текстами гостов
@@ -508,8 +515,8 @@ class Window(QtWidgets.QMainWindow):
         :param player_name_array: список имён игроков
         """
         for i, elem in enumerate(name_array):
-            exec(f'self.ui.Name_{i + 1}.setText(player_name_array[{i}])')
-            exec(f'self.bet_texts.append(BetText(elem, self.ui.Text_{i + 1}, {i + 1}))')
+            self.ui.box_list[i].name.setText(player_name_array[i])
+            self.bet_texts.append(BetText(elem, self.ui.box_list[i].text, i + 1))
 
     def get_missing(self, name):
         """
@@ -522,7 +529,7 @@ class Window(QtWidgets.QMainWindow):
         for bet_text in self.bet_texts:
             if bet_text.name == name:
                 for i in range(match_count):
-                    exec(f'array[{i}] = self.ui.Check_{bet_text.number}_{i + 1}.isChecked()')
+                    array[i] = self.ui.box_list[bet_text.number - 1].checks[i].isChecked()
         return array
 
     def open_saves(self):
@@ -544,12 +551,10 @@ class Window(QtWidgets.QMainWindow):
                                 text += '\n'
                             text += saves_text[i + j]
                             j += 1
-                        number = bet_text.number
-                        exec(f'self.ui.Text_{number}.setPlainText(text)')
+                        self.ui.box_list[bet_text.number - 1].text.setPlainText(text)
                 i += j
         self.open_checks()
 
-    # noinspection PyMethodMayBeStatic
     def open_checks(self):
         """
         Открывает сохранённые данные о нажатых галочках из файла
@@ -559,9 +564,8 @@ class Window(QtWidgets.QMainWindow):
             for i in range(player_count):
                 for j in range(match_count):
                     if text[i][j] == '1':
-                        exec(f'self.ui.Check_{i + 1}_{j + 1}.setCheckState(QtCore.Qt.Checked)')
+                        self.ui.box_list[i].checks[j].setCheckState(QtCore.Qt.Checked)
 
-    # noinspection PyMethodMayBeStatic
     def get_scores(self):
         """
         Считывает счета матчей из полей для ввода
@@ -569,15 +573,13 @@ class Window(QtWidgets.QMainWindow):
         :return: список счетов матчей
         Каждый элемент возвращаемого списка - список из 2 чисел - ставок на 1 и 2 команды
         """
-        scores = ['None'] * match_count
+        scores = []
         for i in range(match_count):
-            exec(f'scores[{i}] = [check_ascii(self.ui.Score_{i + 1}_1.text()),'
-                 f'check_ascii(self.ui.Score_{i + 1}_2.text())]')
+            scores.append([check_ascii(self.ui.scores[i][0].text()), check_ascii(self.ui.scores[i][1].text())])
             if scores[i][0] in none or scores[i][1] in none:
                 scores[i] = 'None'
         return scores
 
-    # noinspection PyMethodMayBeStatic
     def save_scores(self):
         """
         Возвращает счета матчей в текстовом виде для сохранения в файл
@@ -586,12 +588,11 @@ class Window(QtWidgets.QMainWindow):
         for i in range(match_count):
             score = [''] * 2
             for j in range(2):
-                exec(f'score[{j}] = check_ascii(self.ui.Score_{i + 1}_{j + 1}.text())')
+                score[j] = check_ascii(self.ui.scores[i][j].text())
             text += score[0] + '\n' + score[1] + '\n'
         text += end_symbol + '\n'
         return text
 
-    # noinspection PyMethodMayBeStatic
     def clear_scores(self):
         """
         Очищает поля для ввода счетов матчей
@@ -599,18 +600,16 @@ class Window(QtWidgets.QMainWindow):
         empty = ''
         for i in range(match_count):
             for j in range(2):
-                exec(f'self.ui.Score_{i + 1}_{j + 1}.setText(empty)')
+                self.ui.scores[i][j].setText(empty)
 
-    # noinspection PyMethodMayBeStatic
     def clear_checks(self):
         """
         Снимает все галочки
         """
         for i in range(player_count):
             for j in range(match_count):
-                exec(f'self.ui.Check_{i + 1}_{j + 1}.setCheckState(QtCore.Qt.Unchecked)')
+                self.ui.box_list[i].checks[j].setCheckState(QtCore.Qt.Unchecked)
 
-    # noinspection PyMethodMayBeStatic
     def set_scores(self, line_array):
         """
         Выводит на экран сохранённые счета матчей
@@ -618,10 +617,9 @@ class Window(QtWidgets.QMainWindow):
         :param line_array: список счетов матчей (по 1 числу в каждой строке, на 1 матч должно выделяться 2 строки)
         """
         if len(line_array) == match_count * 2:
-            for line in line_array:
-                for i in range(match_count):
-                    for j in range(2):
-                        exec(f'self.ui.Score_{i + 1}_{j + 1}.setText(get_rid_of_slash_n(line_array[2 * i + {j}]))')
+            for i in range(match_count):
+                for j in range(2):
+                    self.ui.scores[i][j].setText(get_rid_of_slash_n(line_array[2 * i + j]))
 
     def open_scores(self, text: list):
         """
@@ -646,8 +644,7 @@ class Matches(Dialog):
         Конструктор класса окна настройки матчей
         """
         super(Matches, self).__init__()
-        self.ui = Ui_Dialog()
-        self.ui.setupUi(self)
+        self.ui = Ui_Dialog(self)
         self.config_teams(self.read_teams())
         self.set_names()
         self.ui.buttonBox.accepted.connect(self.save)
@@ -659,7 +656,6 @@ class Matches(Dialog):
         """
         self.save_matches(matches_txt)
 
-    # noinspection PyMethodMayBeStatic
     def save_matches(self, file):
         """
         Сохраняет данные о матчах в файл, создаёт сообщение об ошибке в случае
@@ -670,14 +666,13 @@ class Matches(Dialog):
         for i in range(int(player_count / 2)):
             name = [''] * 2
             for j in range(2):
-                exec(f'name[{j}] = self.ui.Team_{i + 1}_{j + 1}.currentText()')
+                name[j] = self.ui.teams[i][j].currentText()
             if text != '':
                 text += '\n'
             text += name[0] + ' - ' + name[1]
         with open(file, 'w') as matches:
             print(text, file=matches, end='')
 
-    # noinspection PyMethodMayBeStatic
     def check_repeats(self):
         """
         Проверяет наличие повторяющихся команд в настроенном расписании
@@ -685,9 +680,10 @@ class Matches(Dialog):
         :return: True, если повторения есть, False иначе
         """
         teams = [''] * player_count
+        array = self.read_matches()
         for i in range(int(player_count / 2)):
             for j in range(2):
-                exec(f'teams[{2 * i + j}] = self.ui.Team_{i + 1}_{j + 1}.currentText()')
+                teams[2 * i + j] = array[i][j]
         return False if len(set(teams)) == player_count else True
 
     @staticmethod
@@ -702,7 +698,18 @@ class Matches(Dialog):
             names = [split(line, ' - ')[0] for line in text]
         return names
 
-    # noinspection PyMethodMayBeStatic
+    @staticmethod
+    def read_matches():
+        """
+        Считывает матчи из файла
+
+        :return: список матчей (каждый элемент списка - список из двух названий команд)
+        """
+        with open(matches_txt, 'r') as matches:
+            text = matches.readlines()
+            matches = [split(line, ' - ') for i, line in enumerate(text)]
+        return matches
+
     def config_teams(self, names):
         """
         Обновляет выпадающий список команд в окне настройки матчей
@@ -711,22 +718,18 @@ class Matches(Dialog):
         """
         for i in range(int(player_count / 2)):
             for j in range(2):
-                exec(f'self.ui.Team_{i + 1}_{j + 1}.addItems(names)')
+                self.ui.teams[i][j].addItems(names)
 
-    # noinspection PyMethodMayBeStatic
     def set_names(self):
         """
         Устанавливает нужные названия команд из списка в соответствии с сохранёнными данными в файле
         """
-        with open(matches_txt, 'r') as matches:
-            text = matches.readlines()
-            for i, line in enumerate(text):
-                if i < int(player_count / 2):
-                    match = split(line, ' - ')
-                    index = [0] * 2
-                    for j in range(2):
-                        exec(f'index[{j}] = self.ui.Team_{i + 1}_{j + 1}.findText(match[{j}])')
-                        exec(f'self.ui.Team_{i + 1}_{j + 1}.setCurrentIndex(index[{j}])')
+        matches = self.read_matches()
+        for i in range(int(player_count / 2)):
+            index = [0] * 2
+            for j in range(2):
+                index[j] = self.ui.teams[i][j].findText(matches[i][j])
+                self.ui.teams[i][j].setCurrentIndex(index[j])
 
 
 class Teams(Dialog):
@@ -735,8 +738,7 @@ class Teams(Dialog):
         Конструктор класса окна настройки названий команд
         """
         super(Teams, self).__init__()
-        self.ui = Ui_Dialog_2()
-        self.ui.setupUi(self)
+        self.ui = Ui_Dialog_2(self)
         self.set_names()
         self.ui.buttonBox.accepted.connect(self.save)
         self.setWindowTitle('Настройка команд')
@@ -750,7 +752,6 @@ class Teams(Dialog):
         with open(players_txt, 'w') as players:
             print(sort_lines_alphabetical(text), file=players, end='')
 
-    # noinspection PyMethodMayBeStatic
     def save_players(self):
         """
         Возвращает строку с названиями команд в формате Команда - Имя, разделённые символом "\n"
@@ -758,14 +759,13 @@ class Teams(Dialog):
         text = ''
         for i in range(player_count):
             name = [''] * 2
-            exec(f'name[{0}] += self.ui.Team_{i + 1}.text()')
-            exec(f'name[{1}] += self.ui.Name_{i + 1}.text()')
+            name[0] += self.ui.teams[i].text()
+            name[1] += self.ui.names[i].text()
             if text != '':
                 text += '\n'
             text += name[0] + ' - ' + name[1]
         return text
 
-    # noinspection PyMethodMayBeStatic
     def set_names(self):
         """
         Считывает из файла и выводит названия команд и имена игроков
@@ -773,9 +773,9 @@ class Teams(Dialog):
         with open(players_txt, 'r') as players:
             text = players.readlines()
             for i in range(player_count):
-                names = split(text[i], ' - ')
-                exec(f'self.ui.Team_{i + 1}.setText(names[0])')
-                exec(f'self.ui.Name_{i + 1}.setText(names[1])')
+                (team, name) = split(text[i], ' - ')
+                self.ui.teams[i].setText(team)
+                self.ui.names[i].setText(name)
 
 
 class Results(Dialog):
@@ -784,8 +784,7 @@ class Results(Dialog):
         Конструктор класса окна с итогами матчей
         """
         super(Results, self).__init__()
-        self.ui = Ui_Dialog_3()
-        self.ui.setupUi(self)
+        self.ui = Ui_Dialog_3(self)
         self.print_results()
         self.setWindowTitle('Результаты матчей')
         self.show_copied(False)
@@ -795,7 +794,7 @@ class Results(Dialog):
 
     def copy(self):
         """
-        Копирует текст результатов в буфер обмена, показывает надпись "Скпировано"
+        Копирует текст результатов в буфер обмена, показывает надпись "Скопировано"
         """
         text = self.ui.Text.toPlainText()
         clipboard = QtWidgets.QApplication.clipboard()
@@ -830,6 +829,16 @@ class Results(Dialog):
             error_text += line
         self.ui.Text.setPlainText(text)
         self.ui.Errors.setPlainText(error_text)
+
+
+class Settings(Dialog):
+    def __init__(self):
+        """
+        Конструктор класса окна с итогами матчей
+        """
+        super(Settings, self).__init__()
+        self.ui = Ui_Dialog_4(self)
+        self.setWindowTitle('Настройки')
 
 
 def main():
