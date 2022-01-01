@@ -1,7 +1,7 @@
 from PyQt5 import QtCore, QtWidgets
 
 
-class Ui_Dialog(object):
+class ResultsDialog(object):
     def __init__(self, dialog):
         dialog.resize(400, 412)
         self.horizontalLayoutWidget = QtWidgets.QWidget(dialog)

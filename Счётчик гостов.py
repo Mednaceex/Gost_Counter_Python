@@ -2,11 +2,11 @@ import sys
 from pathlib import Path
 from PyQt5 import QtWidgets, QtCore
 
-from windows.main_window import Ui_MainWindow
-from windows.matches import Ui_Dialog
-from windows.teams import Ui_Dialog as Ui_Dialog_2
-from windows.results import Ui_Dialog as Ui_Dialog_3
-from windows.settings import Ui_Dialog as Ui_Dialog_4
+from windows.main_window import MainWindow
+from windows.matches import MatchesDialog
+from windows.teams import TeamsDialog
+from windows.results import ResultsDialog
+from windows.settings import SettingsDialog
 
 none = ('xx', 'хх', 'ХХ', 'XX', '__', '--', '_', '//', '/', '', 'None')
 match_count = 10
@@ -19,9 +19,11 @@ end_symbol = '//'
 saved_txt = Path('data', 'saved.txt')
 errors_txt = Path('data', 'errors.txt')
 checks_txt = Path('data', 'checks.txt')
+scores_txt = Path('data', 'scores.txt')
 matches_txt = Path('data', 'matches.txt')
 output_txt = Path('data', 'output.txt')
 players_txt = Path('data', 'players.txt')
+custom_txt = Path('data', 'custom.txt')
 
 
 class Better:
@@ -51,10 +53,10 @@ class Better:
         name = ''
         with open(players_txt, 'r') as players:
             text = players.readlines()
-            for line in text:
-                player = split(line, ' - ')
-                if player[0] == self.name:
-                    name = player[1]
+        for line in text:
+            player = split(line, ' - ')
+            if player[0] == self.name:
+                name = player[1]
         return name
 
 
@@ -67,7 +69,7 @@ def check_ascii(string: str):
     """
     new_string = ''
     for char in string:
-        if 0 < ord(char) < 128 and ord(char) != ord('—'):
+        if 0 < ord(char) < 128 or ord(char) == ord('—'):
             new_string += char
     return new_string
 
@@ -144,13 +146,13 @@ def ending_ka(number):
     :return: строка, на которую заменяется "ка" в конце слова
     """
     if 5 <= number <= 20:
-        return 'ок)'
+        return 'ок'
     elif number % 10 == 1:
-        return 'ка)'
+        return 'ка'
     elif 2 <= number % 10 <= 4:
-        return 'ки)'
+        return 'ки'
     else:
-        return 'ок)'
+        return 'ок'
 
 
 def get_players(file):
@@ -363,7 +365,7 @@ class Window(QtWidgets.QMainWindow):
         Конструктор класса главного окна
         """
         super(Window, self).__init__()
-        self.ui = Ui_MainWindow(self)
+        self.ui = MainWindow(self)
         self.matches = Matches()
         self.teams = Teams()
         self.settings = Settings()
@@ -387,12 +389,13 @@ class Window(QtWidgets.QMainWindow):
         Сохраняет введённые значения в соответствующие файлы
         """
         with open(saved_txt, 'w') as saved:
-            print(self.save_scores(), file=saved)
             for bet_text in self.bet_texts:
                 text = check_ascii(bet_text.text.toPlainText())
                 print(bet_text.name, file=saved)
                 print(text, file=saved)
                 print(end_symbol, file=saved)
+        with open(scores_txt, 'w') as score:
+            print(self.save_scores(), file=score)
         self.save_checks(checks_txt)
 
     def count(self):
@@ -467,9 +470,9 @@ class Window(QtWidgets.QMainWindow):
         with open(output_txt, 'w+') as output:
             with open(matches_txt, 'r') as matches:
                 text = matches.readlines()
-                for line in text:
-                    if line != '\n':
-                        get_match(line, output, self.betters)
+            for line in text:
+                if line != '\n':
+                    get_match(line, output, self.betters)
 
     @staticmethod
     def save_errors(errors_list: list[Error], output_file, repeats=False):
@@ -485,8 +488,7 @@ class Window(QtWidgets.QMainWindow):
                 print('Ошибка в расписании: есть повторяющиеся команды\n', file=output)
             if errors_list:
                 for error in errors_list:
-                    count = f'({error.number} став'
-                    count += ending_ka(error.number)
+                    count = f'({error.number} став' + ending_ka(error.number) + ')'
                     print('Ошибка в госте:', error.name, count, file=output)
 
     def config_matches(self):
@@ -494,18 +496,22 @@ class Window(QtWidgets.QMainWindow):
         Показывает окно настройки матчей
         """
         self.matches.show()
+        self.matches.config_teams(self.matches.read_teams())
+        self.matches.set_names()
 
     def config_teams(self):
         """
         Показывает окно настройки названий команд
         """
         self.teams.show()
+        self.teams.set_names()
 
     def config_settings(self):
         """
         Показывает окно настроек
         """
         self.settings.show()
+        self.settings.set_data()
 
     def set_names(self, name_array, player_name_array):
         """
@@ -516,7 +522,7 @@ class Window(QtWidgets.QMainWindow):
         """
         for i, elem in enumerate(name_array):
             self.ui.box_list[i].name.setText(player_name_array[i])
-            self.bet_texts.append(BetText(elem, self.ui.box_list[i].text, i + 1))
+            self.bet_texts.append(BetText(elem, self.ui.box_list[i].text, i))
 
     def get_missing(self, name):
         """
@@ -529,7 +535,7 @@ class Window(QtWidgets.QMainWindow):
         for bet_text in self.bet_texts:
             if bet_text.name == name:
                 for i in range(match_count):
-                    array[i] = self.ui.box_list[bet_text.number - 1].checks[i].isChecked()
+                    array[i] = self.ui.box_list[bet_text.number].checks[i].isChecked()
         return array
 
     def open_saves(self):
@@ -538,22 +544,33 @@ class Window(QtWidgets.QMainWindow):
         """
         with open(saved_txt, 'r') as saved:
             saves = saved.readlines()
-            saves_text = [get_rid_of_slash_n(saves[i]) for i, line in enumerate(saves)]
-            self.open_scores(saves_text)
-            i = 0
-            while i < len(saves_text):
-                j = 1
-                for bet_text in self.bet_texts:
-                    if bet_text.name == saves_text[i]:
-                        text = ''
-                        while saves_text[i + j] != end_symbol:
-                            if text != '':
-                                text += '\n'
-                            text += saves_text[i + j]
-                            j += 1
-                        self.ui.box_list[bet_text.number - 1].text.setPlainText(text)
-                i += j
+        with open(scores_txt, 'r') as score:
+            scores = score.readlines()
+        saves_text = [get_rid_of_slash_n(saves[i]) for i, line in enumerate(saves)]
+        scores_text = [get_rid_of_slash_n(scores[i]) for i, line in enumerate(scores)]
+        self.set_scores(scores_text)
+        self.config_bet_texts(saves_text)
         self.open_checks()
+
+    def config_bet_texts(self, saves_text):
+        """
+        Помещает сохранённые тексты гостов в соответствующие окна
+
+        :param saves_text: текст сохранённых гостов из файла
+        """
+        i = 0
+        while i < len(saves_text):
+            for bet_text in self.bet_texts:
+                if bet_text.name == saves_text[i]:
+                    i += 1
+                    text = ''
+                    while saves_text[i] != end_symbol:
+                        if text != '':
+                            text += '\n'
+                        text += saves_text[i]
+                        i += 1
+                    self.ui.box_list[bet_text.number].text.setPlainText(text)
+            i += 1
 
     def open_checks(self):
         """
@@ -561,10 +578,14 @@ class Window(QtWidgets.QMainWindow):
         """
         with open(checks_txt, 'r') as checks:
             text = checks.readlines()
-            for i in range(player_count):
-                for j in range(match_count):
-                    if text[i][j] == '1':
-                        self.ui.box_list[i].checks[j].setCheckState(QtCore.Qt.Checked)
+        for i, line in enumerate(text):
+            if i >= player_count:
+                break
+            for j, char in enumerate(line):
+                if j >= player_count:
+                    break
+                if text[i][j] == '1':
+                    self.ui.box_list[i].checks[j].setCheckState(QtCore.Qt.Checked)
 
     def get_scores(self):
         """
@@ -590,7 +611,6 @@ class Window(QtWidgets.QMainWindow):
             for j in range(2):
                 score[j] = check_ascii(self.ui.scores[i][j].text())
             text += score[0] + '\n' + score[1] + '\n'
-        text += end_symbol + '\n'
         return text
 
     def clear_scores(self):
@@ -610,32 +630,17 @@ class Window(QtWidgets.QMainWindow):
             for j in range(match_count):
                 self.ui.box_list[i].checks[j].setCheckState(QtCore.Qt.Unchecked)
 
-    def set_scores(self, line_array):
+    def set_scores(self, text: list):
         """
         Выводит на экран сохранённые счета матчей
 
-        :param line_array: список счетов матчей (по 1 числу в каждой строке, на 1 матч должно выделяться 2 строки)
+        :param text: текст сохранённых счетов
+        (список строк, по 1 числу в каждой строке, на 1 матч должно выделяться 2 строки)
         """
-        if len(line_array) == match_count * 2:
-            for i in range(match_count):
-                for j in range(2):
-                    self.ui.scores[i][j].setText(get_rid_of_slash_n(line_array[2 * i + j]))
-
-    def open_scores(self, text: list):
-        """
-        Считывает сохранённые счета матчей из файла.
-        В случае несоответствия количества счетов выводит количество строк в сохранённом файле
-        """
-        score_array = []
-        i = 0
-        if len(text) > 0:
-            while text[i] != end_symbol:
-                score_array.append(text[i])
-                i += 1
-        if len(score_array) == 2 * match_count:
-            self.set_scores(score_array)
-        else:
-            print(len(score_array))
+        score_array = text[0:2 * match_count:1]
+        for i in range(int(len(score_array) / 2)):
+            for j in range(2):
+                self.ui.scores[i][j].setText(get_rid_of_slash_n(score_array[2 * i + j]))
 
 
 class Matches(Dialog):
@@ -644,7 +649,7 @@ class Matches(Dialog):
         Конструктор класса окна настройки матчей
         """
         super(Matches, self).__init__()
-        self.ui = Ui_Dialog(self)
+        self.ui = MatchesDialog(self)
         self.config_teams(self.read_teams())
         self.set_names()
         self.ui.buttonBox.accepted.connect(self.save)
@@ -695,7 +700,7 @@ class Matches(Dialog):
         """
         with open(players_txt, 'r') as players:
             text = players.readlines()
-            names = [split(line, ' - ')[0] for line in text]
+        names = [split(line, ' - ')[0] for line in text]
         return names
 
     @staticmethod
@@ -707,7 +712,7 @@ class Matches(Dialog):
         """
         with open(matches_txt, 'r') as matches:
             text = matches.readlines()
-            matches = [split(line, ' - ') for i, line in enumerate(text)]
+        matches = [split(line, ' - ') for i, line in enumerate(text)]
         return matches
 
     def config_teams(self, names):
@@ -718,6 +723,7 @@ class Matches(Dialog):
         """
         for i in range(int(player_count / 2)):
             for j in range(2):
+                self.ui.teams[i][j].clear()
                 self.ui.teams[i][j].addItems(names)
 
     def set_names(self):
@@ -738,7 +744,7 @@ class Teams(Dialog):
         Конструктор класса окна настройки названий команд
         """
         super(Teams, self).__init__()
-        self.ui = Ui_Dialog_2(self)
+        self.ui = TeamsDialog(self)
         self.set_names()
         self.ui.buttonBox.accepted.connect(self.save)
         self.setWindowTitle('Настройка команд')
@@ -746,7 +752,6 @@ class Teams(Dialog):
     def save(self):
         """
         Сохраняет названия команд и имена игроков в файл
-        :return:
         """
         text = self.save_players()
         with open(players_txt, 'w') as players:
@@ -772,10 +777,12 @@ class Teams(Dialog):
         """
         with open(players_txt, 'r') as players:
             text = players.readlines()
-            for i in range(player_count):
-                (team, name) = split(text[i], ' - ')
-                self.ui.teams[i].setText(team)
-                self.ui.names[i].setText(name)
+        for i, line in enumerate(text):
+            if i >= player_count:
+                break
+            (team, name) = split(line, ' - ')
+            self.ui.teams[i].setText(team)
+            self.ui.names[i].setText(name)
 
 
 class Results(Dialog):
@@ -784,7 +791,7 @@ class Results(Dialog):
         Конструктор класса окна с итогами матчей
         """
         super(Results, self).__init__()
-        self.ui = Ui_Dialog_3(self)
+        self.ui = ResultsDialog(self)
         self.print_results()
         self.setWindowTitle('Результаты матчей')
         self.show_copied(False)
@@ -837,8 +844,35 @@ class Settings(Dialog):
         Конструктор класса окна с итогами матчей
         """
         super(Settings, self).__init__()
-        self.ui = Ui_Dialog_4(self)
+        self.ui = SettingsDialog(self)
+        self.set_data()
+        self.ui.buttonBox.accepted.connect(self.save_data)
         self.setWindowTitle('Настройки')
+
+    def save_data(self):
+        players = self.ui.player_count.widget.text()
+        matches = self.ui.match_count.widget.text()
+        update = self.ui.auto_update.widget.isChecked()
+        text = 'player_count=' + players + '\nmatch_count=' + matches + '\nauto_update=' + str(update)
+        with open(custom_txt, 'w') as custom:
+            print(text, file=custom)
+
+    def set_data(self):
+        """
+        Считывает из файла и выводит названия команд и имена игроков
+        """
+        with open(custom_txt, 'r') as custom:
+            text = custom.readlines()
+        d = {}
+        for line in text:
+            (param, value) = split(get_rid_of_slash_n(line), '=')
+            d[param] = value
+        self.ui.player_count.widget.setText(d['player_count'])
+        self.ui.match_count.widget.setText(d['match_count'])
+        if d['auto_update'] == 'True':
+            self.ui.auto_update.widget.setCheckState(QtCore.Qt.Checked)
+        else:
+            self.ui.auto_update.widget.setCheckState(QtCore.Qt.Unchecked)
 
 
 def main():

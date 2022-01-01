@@ -1,1 +1,3 @@
-auto_update: True
+player_count=20
+match_count=10
+auto_update=True

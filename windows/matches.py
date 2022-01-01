@@ -1,7 +1,7 @@
 from PyQt5 import QtCore, QtWidgets
 
 
-class Ui_Dialog(object):
+class MatchesDialog(object):
     def __init__(self, dialog):
         dialog.resize(924, 667)
         self.buttonBox = QtWidgets.QDialogButtonBox(dialog)

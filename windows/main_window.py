@@ -1,7 +1,7 @@
 from PyQt5 import QtCore, QtWidgets
 
 
-class Ui_MainWindow(object):
+class MainWindow(object):
     def __init__(self, main_window):
         main_window.setEnabled(True)
         main_window.resize(1204, 881)
@@ -13,14 +13,14 @@ class Ui_MainWindow(object):
         self.scrollAreaWidgetContents_82 = QtWidgets.QWidget()
         self.scrollAreaWidgetContents_82.setGeometry(QtCore.QRect(0, 0, 1170, 3175))
         self.verticalLayout_119 = QtWidgets.QVBoxLayout(self.scrollAreaWidgetContents_82)
-        sizePolicy = QtWidgets.QSizePolicy(QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Fixed)
-        sizePolicy.setHorizontalStretch(0)
-        sizePolicy.setVerticalStretch(0)
+        size_policy_exp_fixed = QtWidgets.QSizePolicy(QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Fixed)
+        size_policy_exp_fixed.setHorizontalStretch(0)
+        size_policy_exp_fixed.setVerticalStretch(0)
         self.box_list = []
         for i in range(10):
             row = QtWidgets.QScrollArea(self.scrollAreaWidgetContents_82)
-            sizePolicy.setHeightForWidth(row.sizePolicy().hasHeightForWidth())
-            row.setSizePolicy(sizePolicy)
+            size_policy_exp_fixed.setHeightForWidth(row.sizePolicy().hasHeightForWidth())
+            row.setSizePolicy(size_policy_exp_fixed)
             row.setWidgetResizable(True)
             self.scrollAreaWidgetContents = QtWidgets.QWidget()
             self.scrollAreaWidgetContents.setGeometry(QtCore.QRect(0, 0, 1148, 309))

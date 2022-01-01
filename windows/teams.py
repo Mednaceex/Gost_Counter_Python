@@ -1,7 +1,7 @@
 from PyQt5 import QtCore, QtWidgets
 
 
-class Ui_Dialog(object):
+class TeamsDialog(object):
     def __init__(self, dialog):
         dialog.resize(756, 791)
         self.buttonBox = QtWidgets.QDialogButtonBox(dialog)
