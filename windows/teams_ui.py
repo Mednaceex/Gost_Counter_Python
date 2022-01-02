@@ -1,5 +1,7 @@
 from PyQt5 import QtCore, QtWidgets
 
+from modules.custom_config import player_count
+
 
 class TeamsDialog(object):
     def __init__(self, dialog):
@@ -42,7 +44,7 @@ class TeamsDialog(object):
         self.label = []
         self.teams = []
         self.names = []
-        for i in range(20):
+        for i in range(player_count):
             self.label.append(QtWidgets.QLabel(self.horizontalLayoutWidget))
             self.label_layout.addWidget(self.label[i])
             horizontal_layout = QtWidgets.QHBoxLayout()
@@ -53,14 +55,14 @@ class TeamsDialog(object):
 
         self.main_horizontal_layout.addLayout(self.vertical_layout)
 
-        self.retranslateUi(dialog)
+        self.retranslate_ui()
         self.buttonBox.accepted.connect(dialog.accept)
         self.buttonBox.rejected.connect(dialog.reject)
         QtCore.QMetaObject.connectSlotsByName(dialog)
 
-    def retranslateUi(self, dialog):
+    def retranslate_ui(self):
         _translate = QtCore.QCoreApplication.translate
-        for i in range(20):
+        for i in range(player_count):
             self.label[i].setText(_translate("Dialog", f"{i + 1}."))
         self.label_team_name.setText(_translate("Dialog", "Название команды"))
         self.label_coach_name.setText(_translate("Dialog", "Тренер"))

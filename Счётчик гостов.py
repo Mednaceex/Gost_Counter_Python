@@ -2,15 +2,14 @@ import sys
 from pathlib import Path
 from PyQt5 import QtWidgets, QtCore
 
-from windows.main_window import MainWindow
-from windows.matches import MatchesDialog
-from windows.teams import TeamsDialog
-from windows.results import ResultsDialog
-from windows.settings import SettingsDialog
+from windows.main_window_ui import MainWindow
+from windows.matches_ui import MatchesDialog
+from windows.teams_ui import TeamsDialog
+from windows.results_ui import ResultsDialog
+from windows.settings_ui import SettingsDialog
+from modules.custom_config import player_count, match_count
 
 none = ('xx', 'хх', 'ХХ', 'XX', '__', '--', '_', '//', '/', '', 'None')
-match_count = 10
-player_count = 20
 long_seps = (' -:- ', '—:—', ' -:-', '-:- ', '-:-')
 seps = ('-', '—')
 numbers = ('1', '2', '3', '4', '5', '6', '7', '8', '9', '0')
@@ -685,11 +684,13 @@ class Matches(Dialog):
         :return: True, если повторения есть, False иначе
         """
         teams = [''] * player_count
-        array = self.read_matches()
-        for i in range(int(player_count / 2)):
+        matches = self.read_matches()
+        for i, line in enumerate(matches):
+            if i >= int(player_count / 2):
+                break
             for j in range(2):
-                teams[2 * i + j] = array[i][j]
-        return False if len(set(teams)) == player_count else True
+                teams[2 * i + j] = matches[i][j]
+        return False if len(set(teams)) == len(teams) else True
 
     @staticmethod
     def read_teams():
@@ -731,7 +732,9 @@ class Matches(Dialog):
         Устанавливает нужные названия команд из списка в соответствии с сохранёнными данными в файле
         """
         matches = self.read_matches()
-        for i in range(int(player_count / 2)):
+        for i, line in enumerate(matches):
+            if i >= int(player_count / 2):
+                break
             index = [0] * 2
             for j in range(2):
                 index[j] = self.ui.teams[i][j].findText(matches[i][j])

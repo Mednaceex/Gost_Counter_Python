@@ -1,5 +1,7 @@
 from PyQt5 import QtCore, QtWidgets
 
+from modules.custom_config import player_count
+
 
 class MatchesDialog(object):
     def __init__(self, dialog):
@@ -12,7 +14,7 @@ class MatchesDialog(object):
         self.verticalLayoutWidget.setGeometry(QtCore.QRect(20, 30, 881, 481))
         self.verticalLayout = QtWidgets.QVBoxLayout(self.verticalLayoutWidget)
         self.teams = []
-        for i in range(10):
+        for i in range(int(player_count / 2)):
             self.teams.append([])
             horizontal_layout = QtWidgets.QHBoxLayout()
             for j in range(2):
@@ -20,10 +22,6 @@ class MatchesDialog(object):
                 horizontal_layout.addWidget(self.teams[i][j])
             self.verticalLayout.addLayout(horizontal_layout)
 
-        self.retranslateUi(dialog)
         self.buttonBox.accepted.connect(dialog.accept)
         self.buttonBox.rejected.connect(dialog.reject)
         QtCore.QMetaObject.connectSlotsByName(dialog)
-
-    def retranslateUi(self, dialog):
-        _translate = QtCore.QCoreApplication.translate

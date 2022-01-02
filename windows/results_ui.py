@@ -20,10 +20,10 @@ class ResultsDialog(object):
         self.Copied_Label.setGeometry(QtCore.QRect(14, 350, 371, 20))
         self.Copied_Label.setAlignment(QtCore.Qt.AlignCenter)
 
-        self.retranslateUi(dialog)
+        self.retranslate_ui()
         QtCore.QMetaObject.connectSlotsByName(dialog)
 
-    def retranslateUi(self, dialog):
+    def retranslate_ui(self):
         _translate = QtCore.QCoreApplication.translate
         self.Copy_Button.setText(_translate("Dialog", "Копировать"))
         self.Exit_Button.setText(_translate("Dialog", "Выход"))

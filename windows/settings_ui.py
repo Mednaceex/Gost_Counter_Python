@@ -20,12 +20,12 @@ class SettingsDialog(object):
         for index, line in enumerate((self.player_count, self.match_count, self.auto_update)):
             line.align(x1, x2, y + (h + gap) * index, ww, h)
 
-        self.retranslateUi(dialog)
+        self.retranslate_ui()
         self.buttonBox.accepted.connect(dialog.accept)
         self.buttonBox.rejected.connect(dialog.reject)
         QtCore.QMetaObject.connectSlotsByName(dialog)
 
-    def retranslateUi(self, dialog):
+    def retranslate_ui(self):
         _translate = QtCore.QCoreApplication.translate
         self.player_count.label.setText(_translate("Dialog", "Количество игроков"))
         self.match_count.label.setText(_translate("Dialog", "Количество матчей в госте"))
