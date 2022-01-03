@@ -1,17 +1,20 @@
 from PyQt5 import QtCore, QtWidgets
 
 from modules.custom_config import player_count
+width, height = (924, 667)
 
 
 class MatchesDialog(object):
     def __init__(self, dialog):
-        dialog.resize(924, 667)
+        dialog.resize(width, height)
         self.buttonBox = QtWidgets.QDialogButtonBox(dialog)
-        self.buttonBox.setGeometry(QtCore.QRect(350, 560, 201, 32))
+        self.buttonBox.setGeometry(QtCore.QRect(int(350 * width/924), int(560 * height/667),
+                                                int(201 * width/924), int(32 * height/667)))
         self.buttonBox.setOrientation(QtCore.Qt.Horizontal)
         self.buttonBox.setStandardButtons(QtWidgets.QDialogButtonBox.Cancel | QtWidgets.QDialogButtonBox.Ok)
         self.verticalLayoutWidget = QtWidgets.QWidget(dialog)
-        self.verticalLayoutWidget.setGeometry(QtCore.QRect(20, 30, 881, 481))
+        self.verticalLayoutWidget.setGeometry(QtCore.QRect(int(20 * width/924), int(30 * height/667),
+                                                           int(881 * width/924), int(481 * height/667)))
         self.verticalLayout = QtWidgets.QVBoxLayout(self.verticalLayoutWidget)
         self.teams = []
         for i in range(int(player_count / 2)):

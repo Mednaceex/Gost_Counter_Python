@@ -1,24 +1,27 @@
 from PyQt5 import QtCore, QtWidgets
 
 from modules.custom_config import player_count
+width, height = (756, 791)
 
 
 class TeamsDialog(object):
     def __init__(self, dialog):
-        dialog.resize(756, 791)
+        dialog.resize(width, height)
         self.buttonBox = QtWidgets.QDialogButtonBox(dialog)
-        self.buttonBox.setGeometry(QtCore.QRect(280, 750, 201, 32))
+        self.buttonBox.setGeometry(QtCore.QRect(int(280 * width/756), int(750 * height/791),
+                                                int(201 * width/756), int(32 * height/791)))
         self.buttonBox.setOrientation(QtCore.Qt.Horizontal)
         self.buttonBox.setStandardButtons(QtWidgets.QDialogButtonBox.Cancel | QtWidgets.QDialogButtonBox.Ok)
         self.horizontalLayoutWidget = QtWidgets.QWidget(dialog)
-        self.horizontalLayoutWidget.setGeometry(QtCore.QRect(10, 0, 721, 742))
+        self.horizontalLayoutWidget.setGeometry(QtCore.QRect(int(10 * width/756), 0,
+                                                int(721 * width/756), int(742 * height/791)))
         self.main_horizontal_layout = QtWidgets.QHBoxLayout(self.horizontalLayoutWidget)
         self.label_layout = QtWidgets.QVBoxLayout()
         self.label_layout.setContentsMargins(-1, -1, -1, 0)
-        self.label_layout.setSpacing(15)
+        self.label_layout.setSpacing(int(15 * height/791))
         self.spacing_layout = QtWidgets.QVBoxLayout()
         self.spacing_layout.setContentsMargins(-1, -1, -1, 0)
-        self.spacing_layout.setSpacing(8)
+        self.spacing_layout.setSpacing(int(8 * height/791))
         size_policy_preferred = QtWidgets.QSizePolicy(QtWidgets.QSizePolicy.Preferred, QtWidgets.QSizePolicy.Preferred)
         size_policy_preferred.setHorizontalStretch(0)
         size_policy_preferred.setVerticalStretch(0)
@@ -32,7 +35,7 @@ class TeamsDialog(object):
         self.main_horizontal_layout.addLayout(self.label_layout)
         self.vertical_layout = QtWidgets.QVBoxLayout()
         self.vertical_layout.setContentsMargins(-1, -1, -1, 0)
-        self.vertical_layout.setSpacing(10)
+        self.vertical_layout.setSpacing(int(10 * height/791))
         self.title_layout = QtWidgets.QHBoxLayout()
         self.title_layout.setContentsMargins(-1, -1, -1, 0)
         self.title_layout.setSpacing(0)

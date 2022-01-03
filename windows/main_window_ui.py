@@ -1,19 +1,21 @@
 from PyQt5 import QtCore, QtWidgets
 
 from modules.custom_config import player_count, match_count
+width, height = (1204, 881)
 
 
 class MainWindow(object):
     def __init__(self, main_window):
         main_window.setEnabled(True)
-        main_window.resize(1204, 881)
+        main_window.resize(width, height)
         self.central_widget = QtWidgets.QWidget(main_window)
         self.Main = QtWidgets.QScrollArea(self.central_widget)
-        self.Main.setGeometry(QtCore.QRect(10, 140, 1191, 631))
+        self.Main.setGeometry(QtCore.QRect(int(10 * width/1204), int(140 * height/881),
+                                           int(1191 * width/1204), int(631 * height/881)))
         self.Main.setStyleSheet("border: 0")
         self.Main.setWidgetResizable(True)
         self.scrollAreaWidgetContents_82 = QtWidgets.QWidget()
-        self.scrollAreaWidgetContents_82.setGeometry(QtCore.QRect(0, 0, 1170, 3175))
+        self.scrollAreaWidgetContents_82.setGeometry(QtCore.QRect(0, 0, int(1170 * width/1204), int(3175 * height/881)))
         self.verticalLayout_119 = QtWidgets.QVBoxLayout(self.scrollAreaWidgetContents_82)
         size_policy_exp_fixed = QtWidgets.QSizePolicy(QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Fixed)
         size_policy_exp_fixed.setHorizontalStretch(0)
@@ -25,7 +27,7 @@ class MainWindow(object):
             row.setSizePolicy(size_policy_exp_fixed)
             row.setWidgetResizable(True)
             self.scrollAreaWidgetContents = QtWidgets.QWidget()
-            self.scrollAreaWidgetContents.setGeometry(QtCore.QRect(0, 0, 1148, 309))
+            self.scrollAreaWidgetContents.setGeometry(QtCore.QRect(0, 0, int(1148 * width/1204), int(309 * height/881)))
             horizontal_layout = QtWidgets.QHBoxLayout(self.scrollAreaWidgetContents)
             for k in range(2):
                 box = Box()
@@ -35,10 +37,12 @@ class MainWindow(object):
             self.verticalLayout_119.addWidget(row)
         if player_count % 2 == 1:
             box = Box()
+            self.box_list.append(box)
             self.verticalLayout_119.addWidget(box)
         self.Main.setWidget(self.scrollAreaWidgetContents_82)
         self.verticalLayoutWidget = QtWidgets.QWidget(self.central_widget)
-        self.verticalLayoutWidget.setGeometry(QtCore.QRect(270, 786, 647, 50))
+        self.verticalLayoutWidget.setGeometry(QtCore.QRect(int(270 * width/1204), int(786 * height/881),
+                                                           int(647 * width/1204), int(50 * height/881)))
         self.Button_Layout = QtWidgets.QHBoxLayout(self.verticalLayoutWidget)
         self.Save_Button = QtWidgets.QPushButton(self.verticalLayoutWidget)
         self.Button_Layout.addWidget(self.Save_Button)
@@ -47,7 +51,8 @@ class MainWindow(object):
         self.Reset_Button = QtWidgets.QPushButton(self.verticalLayoutWidget)
         self.Button_Layout.addWidget(self.Reset_Button)
         self.verticalLayoutWidget_22 = QtWidgets.QWidget(self.central_widget)
-        self.verticalLayoutWidget_22.setGeometry(QtCore.QRect(108, 10, 971, 50))
+        self.verticalLayoutWidget_22.setGeometry(QtCore.QRect(int(108 * width/1204), int(10 * height/881),
+                                                              int(971 * width/1204), int(50 * height/881)))
         self.Button_Layout_2 = QtWidgets.QHBoxLayout(self.verticalLayoutWidget_22)
         self.Matches_Button = QtWidgets.QPushButton(self.verticalLayoutWidget_22)
         self.Button_Layout_2.addWidget(self.Matches_Button)
@@ -56,9 +61,9 @@ class MainWindow(object):
         self.Settings_Button = QtWidgets.QPushButton(self.verticalLayoutWidget_22)
         self.Button_Layout_2.addWidget(self.Settings_Button)
         self.widget = QtWidgets.QWidget(self.central_widget)
-        self.widget.setGeometry(QtCore.QRect(30, 70, 1131, 53))
+        self.widget.setGeometry(QtCore.QRect(int(30 * width/1204), int(62 * height/881),
+                                             int(1131 * width/1204), int(75 * height/881)))
         self.horizontalLayout_33 = QtWidgets.QHBoxLayout(self.widget)
-        self.horizontalLayout_33.setContentsMargins(0, 0, 0, 0)
         self.match_labels = []
         self.two_dots_labels = []
         self.scores = []
@@ -79,12 +84,13 @@ class MainWindow(object):
             vertical_layout.addLayout(score_layout)
             self.horizontalLayout_33.addLayout(vertical_layout)
             if i < 9:
-                spacer = QtWidgets.QSpacerItem(15, 40, QtWidgets.QSizePolicy.Minimum, QtWidgets.QSizePolicy.Expanding)
+                spacer = QtWidgets.QSpacerItem(int(15 * width/1204), int(40 * height/881),
+                                               QtWidgets.QSizePolicy.Minimum, QtWidgets.QSizePolicy.Expanding)
                 self.horizontalLayout_33.addItem(spacer)
 
         main_window.setCentralWidget(self.central_widget)
         self.menubar = QtWidgets.QMenuBar(main_window)
-        self.menubar.setGeometry(QtCore.QRect(0, 0, 1204, 26))
+        self.menubar.setGeometry(QtCore.QRect(0, 0, int(1204 * width/1204), int(26 * height/881)))
         main_window.setMenuBar(self.menubar)
         self.statusbar = QtWidgets.QStatusBar(main_window)
         main_window.setStatusBar(self.statusbar)
@@ -112,7 +118,7 @@ class MainWindow(object):
 class Box(QtWidgets.QWidget):
     def __init__(self):
         super(Box, self).__init__()
-        self.setGeometry(QtCore.QRect(0, 0, 560, 287))
+        self.setGeometry(QtCore.QRect(0, 0, int(560 * width/1204), int(287 * height/881)))
         self.verticalLayout = QtWidgets.QVBoxLayout(self)
         self.name = QtWidgets.QLabel(self)
         self.verticalLayout.addWidget(self.name)

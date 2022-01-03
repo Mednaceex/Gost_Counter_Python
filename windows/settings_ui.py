@@ -1,15 +1,19 @@
 from PyQt5 import QtCore, QtWidgets
 
-(x1, x2, y, ww, h, gap) = (10, 345, 15, 555, 20, 20)
+width, height = (924, 667)
+(x1, x2, y, ww, h, gap) =\
+    (10 * width/924, 345 * width/924, 15 * height/667, 555 * width/924, 20 * height/667, 20 * height/667)
 
 
 class SettingsDialog(object):
     def __init__(self, dialog):
-        dialog.resize(924, 667)
+        dialog.resize(width, height)
         self.central_widget = QtWidgets.QWidget(dialog)
-        self.central_widget.setGeometry(QtCore.QRect(10, 10, 901, 650))
+        self.central_widget.setGeometry(QtCore.QRect(int(10 * width/924), int(10 * height/667),
+                                                     int(901 * width/924), int(650 * height/667)))
         self.buttonBox = QtWidgets.QDialogButtonBox(self.central_widget)
-        self.buttonBox.setGeometry(QtCore.QRect(350, 560, 201, 32))
+        self.buttonBox.setGeometry(QtCore.QRect(int(350 * width/924), int(560 * height/667),
+                                                int(201 * width/924), int(32 * height/667)))
         self.buttonBox.setOrientation(QtCore.Qt.Horizontal)
         self.buttonBox.setStandardButtons(QtWidgets.QDialogButtonBox.Cancel | QtWidgets.QDialogButtonBox.Ok)
 
