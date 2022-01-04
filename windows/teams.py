@@ -1,5 +1,5 @@
 from modules.paths import players_txt
-from modules.text_functions import split, sort_lines_alphabetical
+from modules.text_functions import split, sort_lines_alphabetical, check_ascii_russian
 from modules.classes import Dialog
 from modules.custom_config import player_count
 from windows.teams_ui import TeamsDialog
@@ -31,8 +31,8 @@ class Teams(Dialog):
         text = ''
         for i in range(player_count):
             name = [''] * 2
-            name[0] += self.ui.teams[i].text()
-            name[1] += self.ui.names[i].text()
+            name[0] += check_ascii_russian(self.ui.teams[i].text())
+            name[1] += check_ascii_russian(self.ui.names[i].text())
             if text != '':
                 text += '\n'
             text += name[0] + ' - ' + name[1]

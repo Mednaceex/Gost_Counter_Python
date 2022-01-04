@@ -1,15 +1,16 @@
 from PyQt5 import QtCore
 
 from modules.paths import custom_txt
-from modules.text_functions import split
+from modules.text_functions import split, check_numbers
 from modules.classes import Dialog
+from modules.custom_config import player_count, match_count
 from windows.settings_ui import SettingsDialog
 
 
 class Settings(Dialog):
     def __init__(self):
         """
-        Конструктор класса окна с итогами матчей
+        Конструктор класса окна настроек
         """
         super(Settings, self).__init__()
         self.ui = SettingsDialog(self)
@@ -18,16 +19,23 @@ class Settings(Dialog):
         self.setWindowTitle('Настройки')
 
     def save_data(self):
-        players = self.ui.player_count.widget.text()
-        matches = self.ui.match_count.widget.text()
+        """
+        Сохраняет в файл введённые настройки, проверяет соответствие типов
+        """
+        players = check_numbers(self.ui.player_count.widget.text())
+        matches = check_numbers(self.ui.match_count.widget.text())
+        if players == '':
+            players = player_count
+        if matches == '':
+            matches = match_count
         update = self.ui.auto_update.widget.isChecked()
-        text = 'player_count=' + players + '\nmatch_count=' + matches + '\nauto_update=' + str(update)
+        text = 'player_count=' + str(players) + '\nmatch_count=' + str(matches) + '\nauto_update=' + str(update)
         with open(custom_txt, 'w') as custom:
             print(text, file=custom)
 
     def set_data(self):
         """
-        Считывает из файла и выводит названия команд и имена игроков
+        Считывает из файла и выводит пользовательские настройки
         """
         with open(custom_txt, 'r') as custom:
             text = custom.readlines()

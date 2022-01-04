@@ -1,8 +1,8 @@
 from PyQt5 import QtCore, QtWidgets
 
-from modules.const import end_symbol, none
+from modules.const import end_symbol
 from modules.paths import players_txt, saved_txt, scores_txt, checks_txt, errors_txt, output_txt, matches_txt
-from modules.text_functions import get_rid_of_slash_n, check_ascii, ending_ka
+from modules.text_functions import get_rid_of_slash_n, check_ascii, check_numbers, ending_ka
 from modules.classes import BetText, Error
 from modules.counter_functions import get_players, get_names, get_player_names, config_bets_list, count_goals, get_match
 from modules.custom_config import player_count, match_count
@@ -253,8 +253,8 @@ class Window(QtWidgets.QMainWindow):
         """
         scores = []
         for i in range(match_count):
-            scores.append([check_ascii(self.ui.scores[i][0].text()), check_ascii(self.ui.scores[i][1].text())])
-            if scores[i][0] in none or scores[i][1] in none:
+            scores.append([check_numbers(self.ui.scores[i][0].text()), check_numbers(self.ui.scores[i][1].text())])
+            if scores[i][0] == '' or scores[i][1] == '':
                 scores[i] = 'None'
         return scores
 
@@ -266,7 +266,7 @@ class Window(QtWidgets.QMainWindow):
         for i in range(match_count):
             score = [''] * 2
             for j in range(2):
-                score[j] = check_ascii(self.ui.scores[i][j].text())
+                score[j] = check_numbers(self.ui.scores[i][j].text())
             text += score[0] + '\n' + score[1] + '\n'
         return text
 

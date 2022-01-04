@@ -1,4 +1,4 @@
-from modules.const import numbers, none, long_seps, seps
+from modules.const import numbers, long_seps, seps
 from modules.text_functions import split
 from modules.classes import Better
 from modules.custom_config import match_count
@@ -74,7 +74,7 @@ def count_goals(name, bets_list, scores_list, betters_list):
     goals = 0
     bets = ['None'] * match_count
     for i, bet in enumerate(bets_list):
-        if bet in none:
+        if bet == '':
             bets[i] = 'None'
         else:
             bets[i] = bet

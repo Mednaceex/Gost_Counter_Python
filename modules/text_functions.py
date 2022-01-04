@@ -1,13 +1,44 @@
+from modules.const import numbers
+
+
 def check_ascii(string: str):
     """
-    Исключает из строки все символы, не входящие в первые 127 символов таблицы ASCII или не являющиеся символом '—'
+    Исключает из строки все символы, не являющиеся символами с номером 32-127 в таблице ASCII или символом '—'
 
     :param string: строка
     :return: новая строка
     """
     new_string = ''
     for char in string:
-        if 0 < ord(char) < 128 or ord(char) == ord('—'):
+        if 31 < ord(char) < 128 or ord(char) == 8212:
+            new_string += char
+    return new_string
+
+
+def check_ascii_russian(string: str):
+    """
+    Исключает из строки все символы, не являющиеся символами с номером 32-127 в таблице ASCII или русскими буквами
+
+    :param string: строка
+    :return: новая строка
+    """
+    new_string = ''
+    for char in string:
+        if 31 < ord(char) < 128 or 1039 < ord(char) < 1104 or ord(char) in (1025, 1105, 8212):
+            new_string += char
+    return new_string
+
+
+def check_numbers(string: str):
+    """
+    Исключает из строки все символы, не являющиеся цифрами
+
+    :param string: строка
+    :return: новая строка
+    """
+    new_string = ''
+    for char in string:
+        if char in numbers:
             new_string += char
     return new_string
 
