@@ -14,11 +14,7 @@ class TeamsDialog(object):
         self.buttonBox.setStandardButtons(QtWidgets.QDialogButtonBox.Cancel | QtWidgets.QDialogButtonBox.Ok)
         self.horizontalLayoutWidget = QtWidgets.QWidget(dialog)
         self.horizontalLayoutWidget.setGeometry(QtCore.QRect(int(10 * width/756), 0,
-                                                int(721 * width/756), int(742 * height/791)))
-        self.main_horizontal_layout = QtWidgets.QHBoxLayout(self.horizontalLayoutWidget)
-        self.label_layout = QtWidgets.QVBoxLayout()
-        self.label_layout.setContentsMargins(-1, -1, -1, 0)
-        self.label_layout.setSpacing(int(15 * height/791))
+                                                int(721 * width/756), int(742 * height * player_count/15820)))
         self.spacing_layout = QtWidgets.QVBoxLayout()
         self.spacing_layout.setContentsMargins(-1, -1, -1, 0)
         self.spacing_layout.setSpacing(int(8 * height/791))
@@ -31,9 +27,7 @@ class TeamsDialog(object):
             label.setSizePolicy(size_policy_preferred)
             label.setText("")
             self.spacing_layout.addWidget(label)
-        self.label_layout.addLayout(self.spacing_layout)
-        self.main_horizontal_layout.addLayout(self.label_layout)
-        self.vertical_layout = QtWidgets.QVBoxLayout()
+        self.vertical_layout = QtWidgets.QVBoxLayout(self.horizontalLayoutWidget)
         self.vertical_layout.setContentsMargins(-1, -1, -1, 0)
         self.vertical_layout.setSpacing(int(10 * height/791))
         self.title_layout = QtWidgets.QHBoxLayout()
@@ -48,15 +42,14 @@ class TeamsDialog(object):
         self.teams = []
         self.names = []
         for i in range(player_count):
-            self.label.append(QtWidgets.QLabel(self.horizontalLayoutWidget))
-            self.label_layout.addWidget(self.label[i])
             horizontal_layout = QtWidgets.QHBoxLayout()
+            self.label.append(QtWidgets.QLabel(self.horizontalLayoutWidget))
+            self.label[i].setFixedWidth(20)
             for line_list in (self.teams, self.names):
                 line_list.append(QtWidgets.QLineEdit(self.horizontalLayoutWidget))
+                horizontal_layout.addWidget(self.label[i])
                 horizontal_layout.addWidget(line_list[i])
             self.vertical_layout.addLayout(horizontal_layout)
-
-        self.main_horizontal_layout.addLayout(self.vertical_layout)
 
         self.retranslate_ui()
         self.buttonBox.accepted.connect(dialog.accept)

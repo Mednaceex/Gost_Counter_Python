@@ -1,6 +1,6 @@
 from PyQt5 import QtCore, QtWidgets
 
-from modules.custom_config import player_count, match_count
+from modules.custom_config import player_count, match_count, has_additional
 width, height = (1204, 881)
 
 
@@ -67,6 +67,7 @@ class MainWindow(object):
         self.match_labels = []
         self.two_dots_labels = []
         self.scores = []
+        self.add_bets = []
         for i in range(match_count):
             vertical_layout = QtWidgets.QVBoxLayout()
             vertical_layout.setContentsMargins(-1, 0, -1, -1)
@@ -88,6 +89,26 @@ class MainWindow(object):
                                                QtWidgets.QSizePolicy.Minimum, QtWidgets.QSizePolicy.Expanding)
                 self.horizontalLayout_33.addItem(spacer)
 
+        if has_additional:
+            additional_bet_layout = QtWidgets.QVBoxLayout()
+            additional_yes_layout = QtWidgets.QVBoxLayout()
+            additional_no_layout = QtWidgets.QVBoxLayout()
+            additional_bet_horizontal_layout = QtWidgets.QHBoxLayout()
+            self.add_label = QtWidgets.QLabel(self.widget)
+            self.add_yes_label = QtWidgets.QLabel(self.widget)
+            self.add_no_label = QtWidgets.QLabel(self.widget)
+            self.add_yes_box = QtWidgets.QCheckBox(self.widget)
+            self.add_no_box = QtWidgets.QCheckBox(self.widget)
+            additional_yes_layout.addWidget(self.add_yes_label, 0, QtCore.Qt.AlignHCenter)
+            additional_yes_layout.addWidget(self.add_yes_box, 0, QtCore.Qt.AlignHCenter)
+            additional_no_layout.addWidget(self.add_no_label, 0, QtCore.Qt.AlignHCenter)
+            additional_no_layout.addWidget(self.add_no_box, 0, QtCore.Qt.AlignHCenter)
+            additional_bet_horizontal_layout.addLayout(additional_yes_layout)
+            additional_bet_horizontal_layout.addLayout(additional_no_layout)
+            additional_bet_layout.addWidget(self.add_label, 0, QtCore.Qt.AlignHCenter)
+            additional_bet_layout.addLayout(additional_bet_horizontal_layout)
+            self.horizontalLayout_33.addLayout(additional_bet_layout)
+
         main_window.setCentralWidget(self.central_widget)
         self.menubar = QtWidgets.QMenuBar(main_window)
         self.menubar.setGeometry(QtCore.QRect(0, 0, int(1204 * width/1204), int(26 * height/881)))
@@ -104,12 +125,20 @@ class MainWindow(object):
             self.box_list[i].name.setText(_translate("MainWindow", f"{i + 1}"))
             for j in range(match_count):
                 self.box_list[i].labels[j].setText(_translate("MainWindow", f"{j + 1}"))
+            if has_additional:
+                self.box_list[i].add_yes_label.setText(_translate("MainWindow", "Да"))
+                self.box_list[i].add_no_label.setText(_translate("MainWindow", "Нет"))
+                self.box_list[i].add_label.setText(_translate("MainWindow", "Доп. ставка"))
         self.Save_Button.setText(_translate("MainWindow", "Сохранить"))
         self.Count_Button.setText(_translate("MainWindow", "Рассчитать"))
         self.Reset_Button.setText(_translate("MainWindow", "Очистить"))
         self.Matches_Button.setText(_translate("MainWindow", "Настроить матчи"))
         self.Teams_Button.setText(_translate("MainWindow", "Изменить команды"))
         self.Settings_Button.setText(_translate("MainWindow", "Настройки"))
+        if has_additional:
+            self.add_label.setText(_translate("MainWindow", "Дополнительная ставка"))
+            self.add_yes_label.setText(_translate("MainWindow", "Да"))
+            self.add_no_label.setText(_translate("MainWindow", "Нет"))
         for i in range(match_count):
             self.match_labels[i].setText(_translate("MainWindow", f"Матч {i + 1}"))
             self.two_dots_labels[i].setText(_translate("MainWindow", ":"))
@@ -139,3 +168,37 @@ class Box(QtWidgets.QWidget):
             check_layout.addWidget(self.checks[j], 0, QtCore.Qt.AlignHCenter)
             checks_layout.addLayout(check_layout)
         self.verticalLayout.addLayout(checks_layout)
+
+        if has_additional:
+            self.add_yes = QtWidgets.QCheckBox(self)
+            self.add_no = QtWidgets.QCheckBox(self)
+            self.add_yes_label = QtWidgets.QLabel(self)
+            self.add_no_label = QtWidgets.QLabel(self)
+            self.add_label = QtWidgets.QLabel(self)
+
+            additional_bet_layout = QtWidgets.QVBoxLayout()
+            additional_yes_layout = QtWidgets.QHBoxLayout()
+            additional_no_layout = QtWidgets.QHBoxLayout()
+            additional_yes_layout.addWidget(self.add_yes_label, 0, QtCore.Qt.AlignHCenter)
+            additional_yes_layout.addWidget(self.add_yes, 0, QtCore.Qt.AlignHCenter)
+            additional_no_layout.addWidget(self.add_no_label, 0, QtCore.Qt.AlignHCenter)
+            additional_no_layout.addWidget(self.add_no, 0, QtCore.Qt.AlignHCenter)
+            additional_bet_layout.addWidget(self.add_label, 0, QtCore.Qt.AlignHCenter)
+            additional_bet_layout.addLayout(additional_yes_layout)
+            additional_bet_layout.addLayout(additional_no_layout)
+            checks_layout.addLayout(additional_bet_layout)
+
+            self.add_yes.clicked.connect(self.clear_additional_no)
+            self.add_no.clicked.connect(self.clear_additional_yes)
+
+    def clear_additional_yes(self):
+        """
+        Снимает галочку "Да" в окошке дополнительной ставки
+        """
+        self.add_yes.setCheckState(QtCore.Qt.Unchecked)
+
+    def clear_additional_no(self):
+        """
+        Снимает галочку "Нет" в окошке дополнительной ставки
+        """
+        self.add_no.setCheckState(QtCore.Qt.Unchecked)

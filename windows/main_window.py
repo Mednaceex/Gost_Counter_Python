@@ -1,11 +1,12 @@
 from PyQt5 import QtCore, QtWidgets
 
 from modules.const import end_symbol
-from modules.paths import players_txt, saved_txt, scores_txt, checks_txt, errors_txt, output_txt, matches_txt
+from modules.paths import players_txt, saved_txt, scores_txt, checks_txt, errors_txt, output_txt, matches_txt,\
+    additional_txt
 from modules.text_functions import get_rid_of_slash_n, check_ascii, check_numbers, ending_ka
 from modules.classes import BetText, Error
 from modules.counter_functions import get_players, get_names, get_player_names, config_bets_list, count_goals, get_match
-from modules.custom_config import player_count, match_count
+from modules.custom_config import player_count, match_count, has_additional
 
 from windows.main_window_ui import MainWindow
 from windows.matches import Matches
@@ -38,20 +39,21 @@ class Window(QtWidgets.QMainWindow):
         self.ui.Save_Button.clicked.connect(self.save)
         self.ui.Count_Button.clicked.connect(self.count)
         self.ui.Reset_Button.clicked.connect(self.clear)
+        if has_additional:
+            self.ui.add_yes_box.clicked.connect(self.clear_additional_no)
+            self.ui.add_no_box.clicked.connect(self.clear_additional_yes)
 
     def save(self):
         """
         Сохраняет введённые значения в соответствующие файлы
         """
-        with open(saved_txt, 'w') as saved:
-            for bet_text in self.bet_texts:
-                text = check_ascii(bet_text.text.toPlainText())
-                print(bet_text.name, file=saved)
-                print(text, file=saved)
-                print(end_symbol, file=saved)
+        self.save_texts(saved_txt)
         with open(scores_txt, 'w') as score:
             print(self.save_scores(), file=score)
         self.save_checks(checks_txt)
+        with open(additional_txt, 'w') as add:
+            print(self.save_additional(), file=add)
+            print(self.save_additional_bets(), file=add)
 
     def count(self):
         """
@@ -64,7 +66,7 @@ class Window(QtWidgets.QMainWindow):
         self.save_errors(errors, errors_txt, self.matches.check_repeats())
         self.results.show_copied(False)
         self.results.print_results()
-        self.results.show()
+        self.results.show_on_top()
 
     def clear(self):
         """
@@ -74,6 +76,22 @@ class Window(QtWidgets.QMainWindow):
         self.clear_checks()
         for bet_text in self.bet_texts:
             bet_text.text.setPlainText('')
+        if has_additional:
+            self.clear_additional()
+            self.clear_additional_bets()
+
+    def save_texts(self, file):
+        """
+        Сохраняет тексты гостов в файл
+
+        :param file: путь к файлу
+        """
+        with open(file, 'w') as saved:
+            for bet_text in self.bet_texts:
+                text = check_ascii(bet_text.text.toPlainText().replace('\n', ' '))
+                print(bet_text.name, file=saved)
+                print(text, file=saved)
+                print(end_symbol, file=saved)
 
     def save_checks(self, file):
         """
@@ -92,6 +110,24 @@ class Window(QtWidgets.QMainWindow):
                         print(0, end='', file=checks)
                 print('', file=checks)
 
+    def save_additional_bets(self):
+        """
+        Возвращает дополнительные ставки в текстовом виде для сохранения в файл
+        """
+        if has_additional:
+            text = ''
+            for i in range(player_count):
+                if self.ui.box_list[i].add_yes.isChecked():
+                    text += 'True\n'
+                else:
+                    if self.ui.box_list[i].add_no.isChecked():
+                        text += 'False\n'
+                    else:
+                        text += 'None\n'
+        else:
+            text = 'None\n' * player_count
+        return text
+
     def get_goals_and_errors(self, scores):
         """
         Анализирует введённые госты на наличие ошибок
@@ -109,10 +145,14 @@ class Window(QtWidgets.QMainWindow):
             if type(bets) is int:
                 for better in self.betters:
                     if better.name == bet_text.name:
-                        better.goals = 0
+                        better.goals = [0] * (match_count + int(has_additional))
                 errors.append(Error(bet_text.name, bets))
             else:
-                count_goals(bet_text.name, bets, scores, self.betters)
+                if has_additional:
+                    count_goals(bet_text.name, bets, scores, self.betters,
+                                self.get_add_bet(bet_text.name), self.get_add_result())
+                else:
+                    count_goals(bet_text.name, bets, scores, self.betters)
         return errors
 
     def save_results(self):
@@ -150,7 +190,7 @@ class Window(QtWidgets.QMainWindow):
         """
         Показывает окно настройки матчей
         """
-        self.matches.show()
+        self.matches.show_on_top()
         self.matches.config_teams(self.matches.read_teams())
         self.matches.set_names()
 
@@ -158,14 +198,14 @@ class Window(QtWidgets.QMainWindow):
         """
         Показывает окно настройки названий команд
         """
-        self.teams.show()
+        self.teams.show_on_top()
         self.teams.set_names()
 
     def config_settings(self):
         """
         Показывает окно настроек
         """
-        self.settings.show()
+        self.settings.show_on_top()
         self.settings.set_data()
 
     def set_names(self, name_array, player_name_array):
@@ -203,11 +243,18 @@ class Window(QtWidgets.QMainWindow):
             saves = saved.readlines()
         with open(scores_txt, 'r') as score:
             scores = score.readlines()
-        saves_text = [get_rid_of_slash_n(saves[i]) for i, line in enumerate(saves)]
-        scores_text = [get_rid_of_slash_n(scores[i]) for i, line in enumerate(scores)]
+        with open(additional_txt, 'r') as additionals:
+            add = additionals.readlines()
+        saves_text = [get_rid_of_slash_n(line) for i, line in enumerate(saves)]
+        scores_text = [get_rid_of_slash_n(line) for i, line in enumerate(scores)]
+        additional = get_rid_of_slash_n(add[0])
         self.set_scores(scores_text)
         self.config_bet_texts(saves_text)
         self.open_checks()
+        if has_additional:
+            self.open_additional(additional)
+            text = [get_rid_of_slash_n(add[i]) for i in range(1, len(add), 1)]
+            self.open_additional_bets(text)
 
     def config_bet_texts(self, saves_text):
         """
@@ -239,10 +286,31 @@ class Window(QtWidgets.QMainWindow):
             if i >= player_count:
                 break
             for j, char in enumerate(line):
-                if j >= player_count:
+                if j >= match_count:
                     break
                 if text[i][j] == '1':
                     self.ui.box_list[i].checks[j].setCheckState(QtCore.Qt.Checked)
+
+    def open_additional(self, text):
+        """
+        Открывает сохранённые данные об исходе дополнительной ставки
+        :param text: строка из файла с данными о дополнительной ставке
+        """
+        if text == "True":
+            self.ui.add_yes_box.setCheckState(QtCore.Qt.Checked)
+        if text == "False":
+            self.ui.add_no_box.setCheckState(QtCore.Qt.Checked)
+
+    def open_additional_bets(self, text: list):
+        """
+        Открывает сохранённые данные о дополнительных ставках игроков
+        :param text: список строк из файла с данными о дополнительной ставке
+        """
+        for i in range(min(len(text), player_count)):
+            if text[i] == "True":
+                self.ui.box_list[i].add_yes.setCheckState(QtCore.Qt.Checked)
+            if text[i] == "False":
+                self.ui.box_list[i].add_no.setCheckState(QtCore.Qt.Checked)
 
     def get_scores(self):
         """
@@ -258,6 +326,45 @@ class Window(QtWidgets.QMainWindow):
                 scores[i] = 'None'
         return scores
 
+    def get_add_bet(self, name: str):
+        """
+        Определяет дополнительную ставку игрока
+
+        :param name: название команды
+        :return: результат ставки или 'None' если он не указан
+        """
+        if has_additional:
+            i = 0
+            for bet_text in self.bet_texts:
+                if bet_text.name == name:
+                    i = bet_text.number
+            if self.ui.box_list[i].add_yes.isChecked():
+                return 'True'
+            else:
+                if self.ui.box_list[i].add_no.isChecked():
+                    return 'False'
+                else:
+                    return 'None'
+        else:
+            return 'None'
+
+    def get_add_result(self):
+        """
+        Определяет результат дополнительной ставки
+
+        :return: результат ставки или 'None' если он не указан
+        """
+        if has_additional:
+            if self.ui.add_yes_box.isChecked():
+                return 'True'
+            else:
+                if self.ui.add_no_box.isChecked():
+                    return 'False'
+                else:
+                    return 'None'
+        else:
+            return 'None'
+
     def save_scores(self):
         """
         Возвращает счета матчей в текстовом виде для сохранения в файл
@@ -268,6 +375,22 @@ class Window(QtWidgets.QMainWindow):
             for j in range(2):
                 score[j] = check_numbers(self.ui.scores[i][j].text())
             text += score[0] + '\n' + score[1] + '\n'
+        return text
+
+    def save_additional(self):
+        """
+        Возвращает результат дополнительной ставки в текстовом виде для сохранения в файл
+        """
+        if has_additional:
+            if self.ui.add_yes_box.isChecked():
+                text = 'True'
+            else:
+                if self.ui.add_no_box.isChecked():
+                    text = 'False'
+                else:
+                    text = 'None'
+        else:
+            text = 'None'
         return text
 
     def clear_scores(self):
@@ -286,6 +409,33 @@ class Window(QtWidgets.QMainWindow):
         for i in range(player_count):
             for j in range(match_count):
                 self.ui.box_list[i].checks[j].setCheckState(QtCore.Qt.Unchecked)
+
+    def clear_additional(self):
+        """
+        Снимает галочки в окошке дополнительной ставки
+        """
+        self.clear_additional_yes()
+        self.clear_additional_no()
+
+    def clear_additional_yes(self):
+        """
+        Снимает галочку "Да" в окошке дополнительной ставки
+        """
+        self.ui.add_yes_box.setCheckState(QtCore.Qt.Unchecked)
+
+    def clear_additional_no(self):
+        """
+        Снимает галочку "Нет" в окошке дополнительной ставки
+        """
+        self.ui.add_no_box.setCheckState(QtCore.Qt.Unchecked)
+
+    def clear_additional_bets(self):
+        """
+        Снимает галочки дополнительных ставок в окошках с гостами
+        """
+        for i in range(player_count):
+            self.ui.box_list[i].add_yes.setCheckState(QtCore.Qt.Unchecked)
+            self.ui.box_list[i].add_no.setCheckState(QtCore.Qt.Unchecked)
 
     def set_scores(self, text: list):
         """

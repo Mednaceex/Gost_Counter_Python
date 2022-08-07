@@ -2,15 +2,16 @@ from PyQt5 import QtWidgets, QtCore
 
 from modules.paths import players_txt
 from modules.text_functions import split
+from modules.custom_config import match_count
 
 
 class Better:
-    def __init__(self, name: str, goals=0):
+    def __init__(self, name: str, goals=[0] * match_count):
         """
         Конструктор класса игроков
 
         :param name: название команды игрока
-        :param goals: количество голов, забитых игроком
+        :param goals: список количества голов, забитых игроком на каждой ставке
         """
         self.name = name
         self.player_name = self.get_name()
@@ -71,3 +72,11 @@ class Dialog(QtWidgets.QDialog):
         """
         super(Dialog, self).__init__()
         self.setWindowFlag(QtCore.Qt.WindowContextHelpButtonHint, False)
+
+    def show_on_top(self):
+        """
+        Открывает окно и отображает его поверх остальных окон
+        """
+        self.show()
+        self.raise_()
+        self.activateWindow()

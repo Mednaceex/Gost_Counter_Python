@@ -1,7 +1,7 @@
 from modules.const import numbers, long_seps, seps
 from modules.text_functions import split
 from modules.classes import Better
-from modules.custom_config import match_count
+from modules.custom_config import match_count, has_additional
 
 
 def count_bet(bet1: int, bet2: int, score1: int, score2: int):
@@ -23,6 +23,16 @@ def count_bet(bet1: int, bet2: int, score1: int, score2: int):
         return 1
     else:
         return 0
+
+
+def count_additional(bet: bool, result: bool):
+    """
+    Определяет и возвращает количество голов, забитых на дополнительной ставке
+
+    :param bet: дополнительная ставка
+    :param result: реальный результат
+    """
+    return 1 if ((bet == result) & (result != 'None')) else 0
 
 
 def get_players(file):
@@ -62,7 +72,7 @@ def get_player_names(betters_array):
     return [better.name + ' (' + better.player_name + ')' for better in betters_array]
 
 
-def count_goals(name, bets_list, scores_list, betters_list):
+def count_goals(name, bets_list, scores_list, betters_list, add_bet=None, add_score=None):
     """
     Рассчитывает количество забитых игроком голов и устанавливает это значение у соответствующего объекта Better
 
@@ -70,9 +80,11 @@ def count_goals(name, bets_list, scores_list, betters_list):
     :param bets_list: список ставок игрока
     :param scores_list: список счетов реальных матчей
     :param betters_list: список игроков (объектов класса Better)
+    :param add_bet: дополнительная ставка
+    :param add_score: исход дополнительной ставки
     """
-    goals = 0
-    bets = ['None'] * match_count
+    goals = []
+    bets = ['None'] * (match_count + int(has_additional))
     for i, bet in enumerate(bets_list):
         if bet == '':
             bets[i] = 'None'
@@ -80,10 +92,31 @@ def count_goals(name, bets_list, scores_list, betters_list):
             bets[i] = bet
     for i, bet in enumerate(bets):
         if bet != 'None' and scores_list[i] != 'None':
-            goals += count_bet(int(bet[0]), int(bet[1]), int(scores_list[i][0]), int(scores_list[i][1]))
+            goals += [count_bet(int(bet[0]), int(bet[1]), int(scores_list[i][0]), int(scores_list[i][1]))]
+        else:
+            goals += [0]
+    if has_additional:
+        goals[match_count] = count_additional(add_bet, add_score)
     for i in betters_list:
         if i.name == name:
             i.set_goals(goals)
+
+
+def count_score(goals_team1, goals_team2):
+    """
+    Рассчитывает счёт в матче по спискам забитых голов на каждой ставке
+    :param goals_team1: список забитых голов первой команды
+    :param goals_team2: список забитых голов второй команды
+    :return: счёт в матче (кортеж из двух значений - итоговое количество голов каждой команды)
+    """
+    score1 = 0
+    score2 = 0
+    for i in range(match_count + int(has_additional)):
+        if goals_team1[i] < goals_team2[i]:
+            score2 += goals_team2[i]-goals_team1[i]
+        else:
+            score1 += goals_team1[i]-goals_team2[i]
+    return score1, score2
 
 
 def get_match(line, output_file, betters_list):
@@ -95,14 +128,15 @@ def get_match(line, output_file, betters_list):
     :param betters_list: список игроков (объектов класса Better)
     """
     array = split(line, ' - ')
-    g = [0] * 2
+    g = [[]] * 2
     name = [''] * 2
     for i in betters_list:
         for k in range(2):
             if i.name == array[k]:
                 g[k] = i.goals
                 name[k] = i.name
-    print(name[0], f'{g[0]}-{g[1]}', name[1], file=output_file)
+    score = count_score(g[0], g[1])
+    print(name[0], f'{score[0]}-{score[1]}', name[1], file=output_file)
 
 
 def bets_from_text(text: str):

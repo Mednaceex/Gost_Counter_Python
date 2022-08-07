@@ -28,8 +28,10 @@ class Settings(Dialog):
             players = player_count
         if matches == '':
             matches = match_count
+        has_additional = self.ui.has_additional.widget.isChecked()
         update = self.ui.auto_update.widget.isChecked()
-        text = 'player_count=' + str(players) + '\nmatch_count=' + str(matches) + '\nauto_update=' + str(update)
+        text = 'player_count=' + str(players) + '\nmatch_count=' +\
+               str(matches) + '\nhas_additional=' + str(has_additional) + '\nauto_update=' + str(update)
         with open(custom_txt, 'w') as custom:
             print(text, file=custom)
 
@@ -45,6 +47,10 @@ class Settings(Dialog):
             d[param] = value
         self.ui.player_count.widget.setText(d['player_count'])
         self.ui.match_count.widget.setText(d['match_count'])
+        if d['has_additional'] == 'True':
+            self.ui.has_additional.widget.setCheckState(QtCore.Qt.Checked)
+        else:
+            self.ui.has_additional.widget.setCheckState(QtCore.Qt.Unchecked)
         if d['auto_update'] == 'True':
             self.ui.auto_update.widget.setCheckState(QtCore.Qt.Checked)
         else:
