@@ -140,4 +140,7 @@ data/scores.txt
 data/errors.txt
 data/matches.txt
 data/output.txt
+data/custom.txt
+data/players.txt
+data/additional.txt
 updates/
