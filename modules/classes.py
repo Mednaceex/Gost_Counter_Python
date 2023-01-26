@@ -2,7 +2,7 @@ from PyQt5 import QtWidgets, QtCore
 
 from modules.paths import players_txt
 from modules.text_functions import split
-from modules.custom_config import match_count, has_additional
+from modules.custom_config import get_match_count, get_has_additional
 
 
 class Result:
@@ -49,7 +49,7 @@ class AddBetResult(Result):
 
 
 class Better:
-    def __init__(self, name: str, results=[Result(valid=False)] * (match_count + int(has_additional))):
+    def __init__(self, name: str, results=[Result(valid=False)] * (get_match_count() + int(get_has_additional()))):
         """
         Конструктор класса игроков
 

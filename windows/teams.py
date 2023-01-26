@@ -1,7 +1,7 @@
 from modules.paths import players_txt
 from modules.text_functions import split, sort_lines_alphabetical, check_ascii_russian
 from modules.classes import Dialog
-from modules.custom_config import player_count
+from modules.custom_config import get_player_count
 from windows.teams_ui import TeamsDialog
 
 
@@ -29,7 +29,7 @@ class Teams(Dialog):
         Возвращает строку с названиями команд в формате Команда - Имя, разделённые символом "\n"
         """
         text = ''
-        for i in range(player_count):
+        for i in range(get_player_count()):
             name = [''] * 2
             name[0] += check_ascii_russian(self.ui.teams[i].text())
             name[1] += check_ascii_russian(self.ui.names[i].text())
@@ -45,7 +45,7 @@ class Teams(Dialog):
         with open(players_txt, 'r') as players:
             text = players.readlines()
         for i, line in enumerate(text):
-            if i >= player_count:
+            if i >= get_player_count():
                 break
             (team, name) = split(line, ' - ')
             self.ui.teams[i].setText(team)

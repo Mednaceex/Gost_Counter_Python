@@ -1,6 +1,6 @@
 from PyQt5 import QtCore, QtWidgets
 
-from modules.custom_config import player_count, match_count, has_additional
+from modules.custom_config import get_player_count, get_match_count, get_has_additional
 width, height = (1204, 881)
 
 
@@ -21,7 +21,7 @@ class MainWindow(object):
         size_policy_exp_fixed.setHorizontalStretch(0)
         size_policy_exp_fixed.setVerticalStretch(0)
         self.box_list = []
-        for i in range(int(player_count / 2)):
+        for i in range(int(get_player_count() / 2)):
             row = QtWidgets.QScrollArea(self.scrollAreaWidgetContents_82)
             size_policy_exp_fixed.setHeightForWidth(row.sizePolicy().hasHeightForWidth())
             row.setSizePolicy(size_policy_exp_fixed)
@@ -35,7 +35,7 @@ class MainWindow(object):
                 self.box_list.append(box)
             row.setWidget(self.scrollAreaWidgetContents)
             self.verticalLayout_119.addWidget(row)
-        if player_count % 2 == 1:
+        if get_player_count() % 2 == 1:
             box = Box()
             self.box_list.append(box)
             self.verticalLayout_119.addWidget(box)
@@ -68,7 +68,7 @@ class MainWindow(object):
         self.two_dots_labels = []
         self.scores = []
         self.add_bets = []
-        for i in range(match_count):
+        for i in range(get_match_count()):
             vertical_layout = QtWidgets.QVBoxLayout()
             vertical_layout.setContentsMargins(-1, 0, -1, -1)
             self.match_labels.append(QtWidgets.QLabel(self.widget))
@@ -89,7 +89,7 @@ class MainWindow(object):
                                                QtWidgets.QSizePolicy.Minimum, QtWidgets.QSizePolicy.Expanding)
                 self.horizontalLayout_33.addItem(spacer)
 
-        if has_additional:
+        if get_has_additional():
             additional_bet_layout = QtWidgets.QVBoxLayout()
             additional_yes_layout = QtWidgets.QVBoxLayout()
             additional_no_layout = QtWidgets.QVBoxLayout()
@@ -121,11 +121,11 @@ class MainWindow(object):
 
     def retranslate_ui(self):
         _translate = QtCore.QCoreApplication.translate
-        for i in range(player_count):
+        for i in range(get_player_count()):
             self.box_list[i].name.setText(_translate("MainWindow", f"{i + 1}"))
-            for j in range(match_count):
+            for j in range(get_match_count()):
                 self.box_list[i].labels[j].setText(_translate("MainWindow", f"{j + 1}"))
-            if has_additional:
+            if get_has_additional():
                 self.box_list[i].add_yes_label.setText(_translate("MainWindow", "Да"))
                 self.box_list[i].add_no_label.setText(_translate("MainWindow", "Нет"))
                 self.box_list[i].add_label.setText(_translate("MainWindow", "Доп. ставка"))
@@ -135,13 +135,16 @@ class MainWindow(object):
         self.Matches_Button.setText(_translate("MainWindow", "Настроить матчи"))
         self.Teams_Button.setText(_translate("MainWindow", "Изменить команды"))
         self.Settings_Button.setText(_translate("MainWindow", "Настройки"))
-        if has_additional:
+        if get_has_additional():
             self.add_label.setText(_translate("MainWindow", "Дополнительная ставка"))
             self.add_yes_label.setText(_translate("MainWindow", "Да"))
             self.add_no_label.setText(_translate("MainWindow", "Нет"))
-        for i in range(match_count):
+        for i in range(get_match_count()):
             self.match_labels[i].setText(_translate("MainWindow", f"Матч {i + 1}"))
             self.two_dots_labels[i].setText(_translate("MainWindow", ":"))
+
+    def update_settings(self, main_window):
+        pass
 
 
 class Box(QtWidgets.QWidget):
@@ -158,7 +161,7 @@ class Box(QtWidgets.QWidget):
         checks_layout.setContentsMargins(-1, -1, -1, 0)
         self.labels = []
         self.checks = []
-        for j in range(match_count):
+        for j in range(get_match_count()):
             check_layout = QtWidgets.QVBoxLayout()
             check_layout.setContentsMargins(-1, -1, 0, 0)
             self.labels.append(QtWidgets.QLabel(self))
@@ -169,7 +172,7 @@ class Box(QtWidgets.QWidget):
             checks_layout.addLayout(check_layout)
         self.verticalLayout.addLayout(checks_layout)
 
-        if has_additional:
+        if get_has_additional():
             self.add_yes = QtWidgets.QCheckBox(self)
             self.add_no = QtWidgets.QCheckBox(self)
             self.add_yes_label = QtWidgets.QLabel(self)

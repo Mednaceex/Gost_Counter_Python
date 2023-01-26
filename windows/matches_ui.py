@@ -1,6 +1,6 @@
 from PyQt5 import QtCore, QtWidgets
 
-from modules.custom_config import player_count
+from modules.custom_config import get_player_count
 from modules.templates import Line
 width, height = (924, 667)
 
@@ -18,10 +18,10 @@ class MatchesDialog(object):
         self.verticalLayoutWidget.setGeometry(QtCore.QRect(int(20 * width/924),
                                                            int(10 * height/667),
                                                            int(881 * width/924),
-                                                           int(481 * height * (player_count/2) / 6670)))
+                                                           int(481 * height * (get_player_count()/2) / 6670)))
         self.verticalLayout = QtWidgets.QVBoxLayout(self.verticalLayoutWidget)
         self.teams = []
-        for i in range(int(player_count / 2)):
+        for i in range(int(get_player_count() / 2)):
             self.teams.append([])
             horizontal_layout = QtWidgets.QHBoxLayout()
             for j in range(2):
@@ -31,7 +31,7 @@ class MatchesDialog(object):
 
         self.field_factor = Line(self.central_widget, QtWidgets.QCheckBox(self.central_widget))
         self.field_factor.align(32 * width / 924, 160 * width / 924,
-                                int((100 + 481 * (player_count/2)) * height / 6670),
+                                int((100 + 481 * (get_player_count()/2)) * height / 6670),
                                 555 * width / 924, 20 * height / 667)
 
         self.buttonBox.accepted.connect(dialog.accept)

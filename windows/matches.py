@@ -3,7 +3,7 @@ from PyQt5 import QtCore
 from modules.paths import matches_txt, players_txt
 from modules.text_functions import split, get_rid_of_slash_n
 from modules.classes import Dialog
-from modules.custom_config import player_count
+from modules.custom_config import get_player_count
 from windows.matches_ui import MatchesDialog
 
 
@@ -34,7 +34,7 @@ class Matches(Dialog):
         """
         text = 'field_factor='
         text += 'True' if self.ui.field_factor.widget.isChecked() else 'False'
-        for i in range(int(player_count / 2)):
+        for i in range(int(get_player_count() / 2)):
             name = [''] * 2
             for j in range(2):
                 name[j] = self.ui.teams[i][j].currentText()
@@ -48,10 +48,10 @@ class Matches(Dialog):
 
         :return: True, если повторения есть, False иначе
         """
-        teams = [''] * player_count
+        teams = [''] * get_player_count()
         matches = self.read_matches()
         for i, line in enumerate(matches):
-            if i >= int(player_count / 2):
+            if i >= int(get_player_count() / 2):
                 break
             for j in range(2):
                 teams[2 * i + j] = matches[i][j]
@@ -98,7 +98,7 @@ class Matches(Dialog):
 
         :param names: список названий команд
         """
-        for i in range(int(player_count / 2)):
+        for i in range(int(get_player_count() / 2)):
             for j in range(2):
                 self.ui.teams[i][j].clear()
                 self.ui.teams[i][j].addItems(names)
@@ -109,7 +109,7 @@ class Matches(Dialog):
         """
         matches = self.read_matches()
         for i, line in enumerate(matches):
-            if i >= int(player_count / 2):
+            if i >= int(get_player_count() / 2):
                 break
             index = [0] * 2
             for j in range(2):

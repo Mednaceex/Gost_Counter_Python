@@ -10,9 +10,9 @@ class Line(QtWidgets.QWidget):
         self.hint_widget = hint_widget
 
     def align(self, x_label, x_widget, y, widget_width, height):
-        self.label.setGeometry(x_label, y, x_widget - x_label, height)
-        self.widget.setGeometry(x_widget, y, widget_width, height)
+        self.label.setGeometry(int(x_label), int(y), int(x_widget - x_label), int(height))
+        self.widget.setGeometry(int(x_widget), int(y), int(widget_width), int(height))
         if self.hint_label is not None:
-            self.hint_label.setGeometry(x_label, y + height, x_widget - x_label, 2 * height)
+            self.hint_label.setGeometry(int(x_label), int(y + height), int(x_widget - x_label), int(2 * height))
         if self.hint_widget is not None:
-            self.hint_widget.setGeometry(x_widget, y + height, widget_width, 2 * height)
+            self.hint_widget.setGeometry(int(x_widget), int(y + height), int(widget_width), int(2 * height))

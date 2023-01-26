@@ -1,6 +1,6 @@
 from PyQt5 import QtCore, QtWidgets
 
-from modules.custom_config import player_count
+from modules.custom_config import get_player_count
 width, height = (756, 791)
 
 
@@ -14,7 +14,7 @@ class TeamsDialog(object):
         self.buttonBox.setStandardButtons(QtWidgets.QDialogButtonBox.Cancel | QtWidgets.QDialogButtonBox.Ok)
         self.horizontalLayoutWidget = QtWidgets.QWidget(dialog)
         self.horizontalLayoutWidget.setGeometry(QtCore.QRect(int(10 * width/756), 0,
-                                                int(721 * width/756), int(742 * height * player_count/15820)))
+                                                int(721 * width/756), int(742 * height * get_player_count()/15820)))
         self.spacing_layout = QtWidgets.QVBoxLayout()
         self.spacing_layout.setContentsMargins(-1, -1, -1, 0)
         self.spacing_layout.setSpacing(int(8 * height/791))
@@ -41,7 +41,7 @@ class TeamsDialog(object):
         self.label = []
         self.teams = []
         self.names = []
-        for i in range(player_count):
+        for i in range(get_player_count()):
             horizontal_layout = QtWidgets.QHBoxLayout()
             self.label.append(QtWidgets.QLabel(self.horizontalLayoutWidget))
             self.label[i].setFixedWidth(20)
@@ -58,7 +58,7 @@ class TeamsDialog(object):
 
     def retranslate_ui(self):
         _translate = QtCore.QCoreApplication.translate
-        for i in range(player_count):
+        for i in range(get_player_count()):
             self.label[i].setText(_translate("Dialog", f"{i + 1}."))
         self.label_team_name.setText(_translate("Dialog", "Название команды"))
         self.label_coach_name.setText(_translate("Dialog", "Тренер"))
