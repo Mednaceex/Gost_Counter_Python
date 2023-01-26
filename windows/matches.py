@@ -1,5 +1,7 @@
+from PyQt5 import QtCore
+
 from modules.paths import matches_txt, players_txt
-from modules.text_functions import split
+from modules.text_functions import split, get_rid_of_slash_n
 from modules.classes import Dialog
 from modules.custom_config import player_count
 from windows.matches_ui import MatchesDialog
@@ -14,6 +16,7 @@ class Matches(Dialog):
         self.ui = MatchesDialog(self)
         self.config_teams(self.read_teams())
         self.set_names()
+        self.set_field_factor()
         self.ui.buttonBox.accepted.connect(self.save)
         self.setWindowTitle('Настройка матчей')
 
@@ -29,14 +32,13 @@ class Matches(Dialog):
 
         :param file: путь к файлу
         """
-        text = ''
+        text = 'field_factor='
+        text += 'True' if self.ui.field_factor.widget.isChecked() else 'False'
         for i in range(int(player_count / 2)):
             name = [''] * 2
             for j in range(2):
                 name[j] = self.ui.teams[i][j].currentText()
-            if text != '':
-                text += '\n'
-            text += name[0] + ' - ' + name[1]
+            text += '\n' + name[0] + ' - ' + name[1]
         with open(file, 'w') as matches:
             print(text, file=matches, end='')
 
@@ -77,7 +79,18 @@ class Matches(Dialog):
         with open(matches_txt, 'r') as matches:
             text = matches.readlines()
         matches = [split(line, ' - ') for i, line in enumerate(text)]
-        return matches
+        return matches[1::]
+
+    @staticmethod
+    def read_field_factor():
+        """
+        Считывает данные о факторе домашнего поля из файла
+
+        :return: булева переменная - наличие или отсутствие домашнего фактора
+        """
+        with open(matches_txt, 'r') as matches:
+            f = get_rid_of_slash_n(matches.readline())
+        return f == 'field_factor=True'
 
     def config_teams(self, names):
         """
@@ -102,3 +115,10 @@ class Matches(Dialog):
             for j in range(2):
                 index[j] = self.ui.teams[i][j].findText(matches[i][j])
                 self.ui.teams[i][j].setCurrentIndex(index[j])
+
+    def set_field_factor(self):
+        """
+        Устанавливает наличие или отсутствие домашнего фактора в соответствии с сохранёнными данными в файле
+        """
+        if self.read_field_factor():
+            self.ui.field_factor.widget.setCheckState(QtCore.Qt.Checked)

@@ -1,6 +1,7 @@
 from PyQt5 import QtCore, QtWidgets
 
 from modules.custom_config import player_count
+from modules.templates import Line
 width, height = (924, 667)
 
 
@@ -28,9 +29,20 @@ class MatchesDialog(object):
                 horizontal_layout.addWidget(self.teams[i][j])
             self.verticalLayout.addLayout(horizontal_layout)
 
+        self.field_factor = Line(self.central_widget, QtWidgets.QCheckBox(self.central_widget))
+        self.field_factor.align(32 * width / 924, 160 * width / 924,
+                                int((100 + 481 * (player_count/2)) * height / 6670),
+                                555 * width / 924, 20 * height / 667)
+
         self.buttonBox.accepted.connect(dialog.accept)
         self.buttonBox.rejected.connect(dialog.reject)
         QtCore.QMetaObject.connectSlotsByName(dialog)
 
         self.layout = QtWidgets.QGridLayout(dialog)
         self.layout.addWidget(self.central_widget, 0, 0)
+
+        self.retranslate_ui()
+
+    def retranslate_ui(self):
+        _translate = QtCore.QCoreApplication.translate
+        self.field_factor.label.setText(_translate("Dialog", "Домашний фактор"))

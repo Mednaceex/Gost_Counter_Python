@@ -2,26 +2,69 @@ from PyQt5 import QtWidgets, QtCore
 
 from modules.paths import players_txt
 from modules.text_functions import split
-from modules.custom_config import match_count
+from modules.custom_config import match_count, has_additional
+
+
+class Result:
+    def __init__(self, valid: bool):
+        """
+        Конструктор класса результатов ставки
+
+        :param valid: определяет, имеется ли ставка в наличии
+        """
+        self.valid = valid
+        self.winner = False
+        self.diff = False
+        self.exact = False
+        self.result = False
+
+    def __repr__(self):
+        return str(self.winner) + str(self.diff) + str(self.exact)
+
+
+class BetResult(Result):
+    def __init__(self, winner: bool, diff: bool, exact: bool):
+        """
+        Конструктор класса результатов ставки
+
+        :param winner: угаданный исход матча
+        :param diff: угаданная разница голов
+        :param exact: угаданный точный счёт
+        """
+        super().__init__(valid=True)
+        self.winner = winner
+        self.diff = diff
+        self.exact = exact
+
+
+class AddBetResult(Result):
+    def __init__(self, result: bool):
+        """
+        Конструктор класса результатов дополнительной ставки
+
+        :param result: угаданный исход дополнительной ставки
+        """
+        super().__init__(valid=True)
+        self.result = result
 
 
 class Better:
-    def __init__(self, name: str, goals=[0] * match_count):
+    def __init__(self, name: str, results=[Result(valid=False)] * (match_count + int(has_additional))):
         """
         Конструктор класса игроков
 
         :param name: название команды игрока
-        :param goals: список количества голов, забитых игроком на каждой ставке
+        :param results: список результатов каждой ставки (объектов класса BetResult)
         """
         self.name = name
         self.player_name = self.get_name()
-        self.goals = goals
+        self.results = results
 
-    def set_goals(self, value):
+    def set_results(self, value):
         """
         Изменяет количество голов игрока на заданное параметром value
         """
-        self.goals = value
+        self.results = value
 
     def get_name(self):
         """

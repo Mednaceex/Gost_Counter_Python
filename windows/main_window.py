@@ -4,8 +4,9 @@ from modules.const import end_symbol
 from modules.paths import players_txt, saved_txt, scores_txt, checks_txt, errors_txt, output_txt, matches_txt,\
     additional_txt
 from modules.text_functions import get_rid_of_slash_n, check_ascii, check_numbers, ending_ka
-from modules.classes import BetText, Error
-from modules.counter_functions import get_players, get_names, get_player_names, config_bets_list, count_goals, get_match
+from modules.classes import BetText, Error, Result
+from modules.counter_functions import get_players, get_names, get_player_names, config_bets_list, check_for_no_errors,\
+    count_all_bets, get_match, find_bet
 from modules.custom_config import player_count, match_count, has_additional
 
 from windows.main_window_ui import MainWindow
@@ -141,18 +142,18 @@ class Window(QtWidgets.QMainWindow):
         for bet_text in self.bet_texts:
             text = check_ascii(bet_text.text.toPlainText())
             missing = self.get_missing(bet_text.name)
-            bets = config_bets_list(text, missing)
-            if type(bets) is int:
+            if check_for_no_errors(text, missing):
+                bets = config_bets_list(text, missing)
+                if has_additional:
+                    count_all_bets(bet_text.name, bets, scores, self.betters,
+                                    self.get_add_bet(bet_text.name), self.get_add_result())
+                else:
+                    count_all_bets(bet_text.name, bets, scores, self.betters)
+            else:
                 for better in self.betters:
                     if better.name == bet_text.name:
-                        better.goals = [0] * (match_count + int(has_additional))
-                errors.append(Error(bet_text.name, bets))
-            else:
-                if has_additional:
-                    count_goals(bet_text.name, bets, scores, self.betters,
-                                self.get_add_bet(bet_text.name), self.get_add_result())
-                else:
-                    count_goals(bet_text.name, bets, scores, self.betters)
+                        better.results = [Result(valid=False)] * (match_count + int(has_additional))
+                errors.append(Error(bet_text.name, len(find_bet(text))))
         return errors
 
     def save_results(self):
@@ -163,11 +164,10 @@ class Window(QtWidgets.QMainWindow):
         Сохраняет результаты матчей в файл вывода
         """
         with open(output_txt, 'w+') as output:
-            with open(matches_txt, 'r') as matches:
-                text = matches.readlines()
+            text = Matches.read_matches()
             for line in text:
                 if line != '\n':
-                    get_match(line, output, self.betters)
+                    get_match(line, output, self.betters, Matches.read_field_factor())
 
     @staticmethod
     def save_errors(errors_list: list[Error], output_file, repeats=False):
@@ -185,6 +185,8 @@ class Window(QtWidgets.QMainWindow):
                 for error in errors_list:
                     count = f'({error.number} став' + ending_ka(error.number) + ')'
                     print('Ошибка в госте:', error.name, count, file=output)
+            else:
+                print('Ошибок в гостах не найдено.', file=output)
 
     def config_matches(self):
         """

@@ -1,28 +1,25 @@
 from modules.const import numbers, long_seps, seps
 from modules.text_functions import split
-from modules.classes import Better
+from modules.classes import Better, BetResult, AddBetResult, Result
 from modules.custom_config import match_count, has_additional
 
 
 def count_bet(bet1: int, bet2: int, score1: int, score2: int):
     """
-    Определяет и возвращает количество голов, забитых на конкретной ставке
+    Определяет результат конкретной ставки
 
     :param bet1: инд. тотал 1 команды в ставке
     :param bet2: инд. тотал 2 команды в ставке
     :param score1: реальный инд. тотал 1 команды
     :param score2: реальный инд. тотал 2 команды
+    :return: объект класса BetResult с результатами ставки
     """
-    if (bet1 == score1) and (bet2 == score2):
-        return 2
-    elif (bet1 < bet2) and (score1 < score2):
-        return 1
-    elif (bet1 > bet2) and (score1 > score2):
-        return 1
-    elif (bet1 == bet2) and (score1 == score2):
-        return 1
-    else:
-        return 0
+    winner = (((bet1 < bet2) and (score1 < score2))
+              or ((bet1 > bet2) and (score1 > score2))
+              or ((bet1 == bet2) and (score1 == score2)))
+    diff = (score2 - score1) == (bet2 - bet1)
+    exact = (bet1 == score1) and (bet2 == score2)
+    return BetResult(winner, diff, exact)
 
 
 def count_additional(bet: bool, result: bool):
@@ -32,7 +29,7 @@ def count_additional(bet: bool, result: bool):
     :param bet: дополнительная ставка
     :param result: реальный результат
     """
-    return 1 if ((bet == result) & (result != 'None')) else 0
+    return AddBetResult((bet == result) & (result != 'None'))
 
 
 def get_players(file):
@@ -72,9 +69,9 @@ def get_player_names(betters_array):
     return [better.name + ' (' + better.player_name + ')' for better in betters_array]
 
 
-def count_goals(name, bets_list, scores_list, betters_list, add_bet=None, add_score=None):
+def count_all_bets(name, bets_list, scores_list, betters_list, add_bet=None, add_score=None):
     """
-    Рассчитывает количество забитых игроком голов и устанавливает это значение у соответствующего объекта Better
+    Определяет результаты всех ставок игрока
 
     :param name: название команды
     :param bets_list: список ставок игрока
@@ -83,7 +80,7 @@ def count_goals(name, bets_list, scores_list, betters_list, add_bet=None, add_sc
     :param add_bet: дополнительная ставка
     :param add_score: исход дополнительной ставки
     """
-    goals = []
+    results_list = []
     bets = ['None'] * (match_count + int(has_additional))
     for i, bet in enumerate(bets_list):
         if bet == '':
@@ -92,51 +89,98 @@ def count_goals(name, bets_list, scores_list, betters_list, add_bet=None, add_sc
             bets[i] = bet
     for i, bet in enumerate(bets):
         if bet != 'None' and scores_list[i] != 'None':
-            goals += [count_bet(int(bet[0]), int(bet[1]), int(scores_list[i][0]), int(scores_list[i][1]))]
+            results_list += [count_bet(int(bet[0]), int(bet[1]), int(scores_list[i][0]), int(scores_list[i][1]))]
         else:
-            goals += [0]
+            results_list += [Result(valid=False)]
     if has_additional:
-        goals[match_count] = count_additional(add_bet, add_score)
+        results_list[match_count] = count_additional(add_bet, add_score)
+    set_player_results(betters_list, name, results_list)
+
+
+def set_player_results(betters_list, name, results_list):
+
     for i in betters_list:
         if i.name == name:
-            i.set_goals(goals)
+            i.set_results(results_list)
 
 
-def count_score(goals_team1, goals_team2):
+def count_score(results_team1: list[Result], results_team2: list[Result], field_factor: bool, count=match_count):
     """
-    Рассчитывает счёт в матче по спискам забитых голов на каждой ставке
-    :param goals_team1: список забитых голов первой команды
-    :param goals_team2: список забитых голов второй команды
+    Рассчитывает счёт в матче по спискам результатов каждой ставки
+    :param results_team1: список результатов ставок первой команды (объектов класса Result)
+    :param results_team2: список результатов ставок второй команды (объектов класса Result)
+    :param field_factor: наличие или отсутствие фактора домашнего поля
+    :param count: количество матчей в госте
     :return: счёт в матче (кортеж из двух значений - итоговое количество голов каждой команды)
     """
     score1 = 0
     score2 = 0
-    for i in range(match_count + int(has_additional)):
-        if goals_team1[i] < goals_team2[i]:
-            score2 += goals_team2[i]-goals_team1[i]
-        else:
-            score1 += goals_team1[i]-goals_team2[i]
+    for i in range(count):
+        if results_team1[i].exact:
+            if not results_team2[i].exact or field_factor:
+                score1 += 1
+            if not results_team2[i].winner:
+                score1 += 1
+        elif results_team2[i].exact:
+            score2 += 1
+            if not results_team1[i].winner:
+                score2 += 1
+        elif results_team1[i].winner and not results_team2[i].winner:
+            score1 += 1
+        elif not results_team1[i].winner and results_team2[i].winner:
+            score2 += 1
+
+    if has_additional:
+        if results_team1[count].result and not results_team2[count].result:
+            score1 += 1
+        if not results_team1[count].result and results_team2[count].result:
+            score2 += 1
     return score1, score2
 
 
-def get_match(line, output_file, betters_list):
+def get_match(match: list[str, str], output_file, betters_list: list[Better], field_factor: bool):
     """
     Считывает матч из строки расписания и выводит его счёт в файл вывода
 
-    :param line: строка с матчем из расписания
-    :param output_file: путь к файлу вывода
+    :param match: матч в формате списка из двух строк - названий команд
+    :param field_factor: наличие фактора домашнего поля
     :param betters_list: список игроков (объектов класса Better)
+    :param output_file: путь к файлу вывода
     """
-    array = split(line, ' - ')
-    g = [[]] * 2
+    results = [[]] * 2
     name = [''] * 2
-    for i in betters_list:
+    for better in betters_list:
         for k in range(2):
-            if i.name == array[k]:
-                g[k] = i.goals
-                name[k] = i.name
-    score = count_score(g[0], g[1])
-    print(name[0], f'{score[0]}-{score[1]}', name[1], file=output_file)
+            if better.name == match[k]:
+                results[k] = better.results
+                name[k] = better.name
+    print_match_score(results[0], results[1], name[0], name[1], field_factor, output_file)
+
+
+def print_match_score(results_team1, results_team2, name_team1, name_team2, field_factor, output_file):
+    """
+    Считает и выводит счёт матча из строки расписания в файл вывода, проверяет на случай технического поражения или
+    ничьей при ошибках в количестве ставок
+
+    :param results_team1: список результатов первой команды (объектов класса Result)
+    :param results_team2: список результатов первой команды (объектов класса Result)
+    :param name_team1: название первой команды
+    :param name_team2: название первой команды
+    :param field_factor: наличие фактора домашнего поля
+    :param output_file: путь к файлу вывода
+    """
+
+    if results_team1[0].valid:
+        if results_team2[0].valid:
+            score = count_score(results_team1, results_team2, field_factor)
+            print(name_team1, f'{score[0]}-{score[1]}', name_team2, file=output_file)
+        else:
+            print(name_team1, '3-0', name_team2, '(Тех.)', file=output_file)
+    else:
+        if results_team2[0].valid:
+            print(name_team1, '0-3', name_team2, '(Тех.)', file=output_file)
+        else:
+            print(name_team1, '0-0', name_team2, '(Тех.)', file=output_file)
 
 
 def bets_from_text(text: str):
@@ -147,8 +191,8 @@ def bets_from_text(text: str):
     """
     array = []
     for i, character in enumerate(text):
-        if character == ':' and 0 < i < len(text)-1:
-            if text[i-1] in numbers and text[i+1] in numbers:
+        if character == ':' and 0 < i < len(text) - 1:
+            if text[i - 1] in numbers and text[i + 1] in numbers:
                 (bet1, bet2) = ('', '')
                 (left, right) = (1, 1)
                 while i - left > 1 and text[i - left - 1] in numbers:
@@ -177,6 +221,18 @@ def find_bet(text: str):
     return bets_from_text(text)
 
 
+def check_for_no_errors(text: str, missing: list, count=match_count):
+    """
+    Проверяет текста госта, присланного игроком, на наличие ошибок в количестве ставок
+
+    :param text: текст госта
+    :param missing: список из count элементов - True (ставка отсутствует) или False (ставка есть)
+    :param count: количество матчей в госте
+    :return: True в случае правильного госта, False при наличии ошибок
+    """
+    return len(find_bet(text)) == count - missing.count(True) or len(find_bet(text)) == count
+
+
 def config_bets_list(text: str, missing: list, count=match_count):
     """
     Считывает ставки из текста госта, присланного игроком
@@ -184,31 +240,20 @@ def config_bets_list(text: str, missing: list, count=match_count):
     :param text: текст госта
     :param missing: список из count элементов - True (ставка отсутствует) или False (ставка есть)
     :param count: количество матчей в госте
-    :return: количество ставок в случае ошибки в госте, иначе список ставок игрока
+    :return: список ставок игрока
     """
+    if not check_for_no_errors(text, missing, count):
+        raise
     bets_array = find_bet(text)
     array = []
-    error = False
-    length = len(bets_array)
-    if count <= length:
-        for i in range(count):
-            array.append(bets_array[i])
-        for i, missing_match in enumerate(missing):
-            if missing_match:
-                array[i] = 'None'
-    else:
-        k = 0
-        for i, missing_match in enumerate(missing):
-            if missing_match:
-                array.append('None')
-            else:
-                if k >= length:
-                    error = True
-                    break
-                else:
-                    array.append(bets_array[k])
-                    k += 1
-    if error:
-        return length
-    else:
-        return array
+    k = 0
+    long = not len(find_bet(text)) == count - missing.count(True)
+    for i, missing_match in enumerate(missing):
+        if missing_match:
+            array.append('None')
+            if long:
+                k += 1
+        else:
+            array.append(bets_array[k])
+            k += 1
+    return array

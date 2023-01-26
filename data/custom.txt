@@ -1,4 +1,4 @@
-player_count=20
-match_count=10
+player_count=10
+match_count=8
 has_additional=True
 auto_update=False
