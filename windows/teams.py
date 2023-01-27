@@ -50,3 +50,10 @@ class Teams(Dialog):
             (team, name) = split(line, ' - ')
             self.ui.teams[i].setText(team)
             self.ui.names[i].setText(name)
+
+    def update_settings(self):
+        """
+        Обновляет параметры главного окна в соответствии с пользовательскими настройками
+        """
+        self.ui.update_settings()
+        self.set_names()

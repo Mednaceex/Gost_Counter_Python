@@ -105,7 +105,7 @@ def set_player_results(betters_list, name, results_list):
             i.set_results(results_list)
 
 
-def count_score(results_team1: list[Result], results_team2: list[Result], field_factor: bool, count=get_match_count()):
+def count_score(results_team1: list[Result], results_team2: list[Result], field_factor: bool, count):
     """
     Рассчитывает счёт в матче по спискам результатов каждой ставки
     :param results_team1: список результатов ставок первой команды (объектов класса Result)
@@ -191,7 +191,7 @@ def print_match_score_to_file(results_team1, results_team2, name_team1, name_tea
     """
     if results_team1[0].valid:
         if results_team2[0].valid:
-            score = count_score(results_team1, results_team2, field_factor)
+            score = count_score(results_team1, results_team2, field_factor, get_match_count())
             print(name_team1, f'{score[0]}-{score[1]}', name_team2, file=output_file)
         else:
             print(name_team1, '3-0', name_team2, '(Тех.)', file=output_file)
@@ -240,19 +240,20 @@ def find_bet(text: str):
     return bets_from_text(text)
 
 
-def check_for_no_errors(text: str, missing: list, count=get_match_count()):
+def check_for_no_errors(text: str, missing: list, count):
     """
-    Проверяет текста госта, присланного игроком, на наличие ошибок в количестве ставок
+    Проверяет текст госта, присланного игроком, на наличие ошибок в количестве ставок
 
     :param text: текст госта
     :param missing: список из count элементов - True (ставка отсутствует) или False (ставка есть)
     :param count: количество матчей в госте
     :return: True в случае правильного госта, False при наличии ошибок
     """
-    return len(find_bet(text)) == count - missing.count(True) or len(find_bet(text)) == count
+    num = len(find_bet(text))
+    return num == count - missing.count(True) or num == count
 
 
-def config_bets_list(text: str, missing: list, count=get_match_count()):
+def config_bets_list(text: str, missing: list, count):
     """
     Считывает ставки из текста госта, присланного игроком
 

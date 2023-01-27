@@ -36,7 +36,7 @@ class Settings(Dialog):
                str(matches) + '\nhas_additional=' + str(has_additional) + '\nauto_update=' + str(update)
         with open(custom_txt, 'w') as custom:
             print(text, file=custom)
-        #self.main_window.update_settings()
+        self.main_window.update_settings()
 
     def set_data(self):
         """

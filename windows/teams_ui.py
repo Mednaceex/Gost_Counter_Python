@@ -13,8 +13,7 @@ class TeamsDialog(object):
         self.buttonBox.setOrientation(QtCore.Qt.Horizontal)
         self.buttonBox.setStandardButtons(QtWidgets.QDialogButtonBox.Cancel | QtWidgets.QDialogButtonBox.Ok)
         self.horizontalLayoutWidget = QtWidgets.QWidget(dialog)
-        self.horizontalLayoutWidget.setGeometry(QtCore.QRect(int(10 * width/756), 0,
-                                                int(721 * width/756), int(742 * height * get_player_count()/15820)))
+        self.set_size()
         self.spacing_layout = QtWidgets.QVBoxLayout()
         self.spacing_layout.setContentsMargins(-1, -1, -1, 0)
         self.spacing_layout.setSpacing(int(8 * height/791))
@@ -38,6 +37,21 @@ class TeamsDialog(object):
         self.label_coach_name = QtWidgets.QLabel(self.horizontalLayoutWidget)
         self.title_layout.addWidget(self.label_coach_name, 0, QtCore.Qt.AlignHCenter | QtCore.Qt.AlignVCenter)
         self.vertical_layout.addLayout(self.title_layout)
+        self.set_teams()
+
+        self._translate = QtCore.QCoreApplication.translate
+        self.retranslate_ui()
+        self.buttonBox.accepted.connect(dialog.accept)
+        self.buttonBox.rejected.connect(dialog.reject)
+        QtCore.QMetaObject.connectSlotsByName(dialog)
+
+    def retranslate_ui(self):
+        for i in range(get_player_count()):
+            self.label[i].setText(self._translate("Dialog", f"{i + 1}."))
+        self.label_team_name.setText(self._translate("Dialog", "Название команды"))
+        self.label_coach_name.setText(self._translate("Dialog", "Тренер"))
+
+    def set_teams(self):
         self.label = []
         self.teams = []
         self.names = []
@@ -51,14 +65,20 @@ class TeamsDialog(object):
                 horizontal_layout.addWidget(line_list[i])
             self.vertical_layout.addLayout(horizontal_layout)
 
-        self.retranslate_ui()
-        self.buttonBox.accepted.connect(dialog.accept)
-        self.buttonBox.rejected.connect(dialog.reject)
-        QtCore.QMetaObject.connectSlotsByName(dialog)
+    def remove_teams(self):
+        for item in self.teams:
+            self.vertical_layout.removeWidget(item)
+        for item in self.names:
+            self.vertical_layout.removeWidget(item)
+        for item in self.label:
+            item.hide()
 
-    def retranslate_ui(self):
-        _translate = QtCore.QCoreApplication.translate
-        for i in range(get_player_count()):
-            self.label[i].setText(_translate("Dialog", f"{i + 1}."))
-        self.label_team_name.setText(_translate("Dialog", "Название команды"))
-        self.label_coach_name.setText(_translate("Dialog", "Тренер"))
+    def update_settings(self):
+        self.remove_teams()
+        self.set_size()
+        self.set_teams()
+        self.retranslate_ui()
+
+    def set_size(self):
+        self.horizontalLayoutWidget.setGeometry(QtCore.QRect(int(10 * width/756), 0,
+                                                int(721 * width/756), int(742 * height * get_player_count()/15820)))

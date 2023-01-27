@@ -1,8 +1,7 @@
 from PyQt5 import QtCore, QtWidgets
 
 from modules.const import end_symbol
-from modules.paths import players_txt, saved_txt, scores_txt, checks_txt, errors_txt, output_txt, matches_txt,\
-    additional_txt
+from modules.paths import players_txt, saved_txt, scores_txt, checks_txt, errors_txt, output_txt, additional_txt
 from modules.text_functions import get_rid_of_slash_n, check_ascii, check_numbers, ending_ka
 from modules.classes import BetText, Error, Result
 from modules.counter_functions import get_players, get_names, get_player_names, config_bets_list, check_for_no_errors,\
@@ -29,7 +28,10 @@ class Window(QtWidgets.QMainWindow):
         self.results = Results()
         self.bet_texts = []
         self.betters = []
-        self.update_settings()
+        with open(players_txt, 'r') as players:
+            self.betters = get_players(players)
+        self.set_names(get_names(self.betters), get_player_names(self.betters))
+        self.open_saves()
         self.setWindowTitle('Счётчик гостов')
 
         self.ui.Matches_Button.clicked.connect(self.config_matches)
@@ -46,11 +48,15 @@ class Window(QtWidgets.QMainWindow):
         """
         Обновляет параметры главного окна в соответствии с пользовательскими настройками
         """
+        self.ui.update_settings()
+        self.bet_texts = []
+        self.betters = []
         with open(players_txt, 'r') as players:
             self.betters = get_players(players)
         self.set_names(get_names(self.betters), get_player_names(self.betters))
         self.open_saves()
-        self.ui.update_settings(self)
+        self.teams.update_settings()
+        self.matches.update_settings()
 
     def save(self):
         """
@@ -150,8 +156,8 @@ class Window(QtWidgets.QMainWindow):
         for bet_text in self.bet_texts:
             text = check_ascii(bet_text.text.toPlainText())
             missing = self.get_missing(bet_text.name)
-            if check_for_no_errors(text, missing):
-                bets = config_bets_list(text, missing)
+            if check_for_no_errors(text, missing, get_match_count()):
+                bets = config_bets_list(text, missing, get_match_count())
                 if get_has_additional():
                     count_all_bets(bet_text.name, bets, scores, self.betters,
                                     self.get_add_bet(bet_text.name), self.get_add_result())
@@ -201,7 +207,7 @@ class Window(QtWidgets.QMainWindow):
         Показывает окно настройки матчей
         """
         self.matches.show_on_top()
-        self.matches.config_teams(self.matches.read_teams())
+        self.matches.config_teams()
         self.matches.set_names()
 
     def config_teams(self):

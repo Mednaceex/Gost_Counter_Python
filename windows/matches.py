@@ -14,7 +14,7 @@ class Matches(Dialog):
         """
         super(Matches, self).__init__()
         self.ui = MatchesDialog(self)
-        self.config_teams(self.read_teams())
+        self.config_teams()
         self.set_names()
         self.set_field_factor()
         self.ui.buttonBox.accepted.connect(self.save)
@@ -92,12 +92,11 @@ class Matches(Dialog):
             f = get_rid_of_slash_n(matches.readline())
         return f == 'field_factor=True'
 
-    def config_teams(self, names):
+    def config_teams(self):
         """
         Обновляет выпадающий список команд в окне настройки матчей
-
-        :param names: список названий команд
         """
+        names = self.read_teams()
         for i in range(int(get_player_count() / 2)):
             for j in range(2):
                 self.ui.teams[i][j].clear()
@@ -122,3 +121,12 @@ class Matches(Dialog):
         """
         if self.read_field_factor():
             self.ui.field_factor.widget.setCheckState(QtCore.Qt.Checked)
+
+    def update_settings(self):
+        """
+        Обновляет параметры главного окна в соответствии с пользовательскими настройками
+        """
+        self.ui.update_settings()
+        self.config_teams()
+        self.set_names()
+        self.set_field_factor()
