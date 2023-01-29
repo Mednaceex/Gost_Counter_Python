@@ -9,23 +9,31 @@ class MatchesDialog(object):
     def __init__(self, dialog):
         dialog.resize(width, height)
         self.central_widget = QtWidgets.QWidget()
+
+        self.Main = QtWidgets.QScrollArea(self.central_widget)
+        self.Main.setStyleSheet("border: 0")
+        self.Main.setWidgetResizable(False)
+        self.scrollAreaWidgetContents = QtWidgets.QWidget(self.Main)
+        self.Main.setWidget(self.scrollAreaWidgetContents)
+
         self.buttonBox = QtWidgets.QDialogButtonBox(self.central_widget)
         self.buttonBox.setGeometry(QtCore.QRect(int(350 * width/924), int(560 * height/667),
                                                 int(201 * width/924), int(32 * height/667)))
         self.buttonBox.setOrientation(QtCore.Qt.Horizontal)
         self.buttonBox.setStandardButtons(QtWidgets.QDialogButtonBox.Cancel | QtWidgets.QDialogButtonBox.Ok)
-        self.verticalLayoutWidget = QtWidgets.QWidget(self.central_widget)
+        self.verticalLayoutWidget = QtWidgets.QWidget(self.scrollAreaWidgetContents)
         self.verticalLayout = QtWidgets.QVBoxLayout(self.verticalLayoutWidget)
         self.teams = []
         for i in range(int(get_player_count() / 2)):
             self.teams.append([])
             horizontal_layout = QtWidgets.QHBoxLayout()
             for j in range(2):
-                self.teams[i].append(QtWidgets.QComboBox(self.verticalLayoutWidget))
+                box = QtWidgets.QComboBox(self.verticalLayoutWidget)
+                self.teams[i].append(box)
                 horizontal_layout.addWidget(self.teams[i][j])
             self.verticalLayout.addLayout(horizontal_layout)
 
-        self.field_factor = Line(self.central_widget, QtWidgets.QCheckBox(self.central_widget))
+        self.field_factor = Line(self.scrollAreaWidgetContents, QtWidgets.QCheckBox(self.scrollAreaWidgetContents))
         self.set_size()
 
         self.buttonBox.accepted.connect(dialog.accept)
@@ -56,10 +64,14 @@ class MatchesDialog(object):
             self.verticalLayout.addLayout(horizontal_layout)
 
     def set_size(self):
-        self.verticalLayoutWidget.setGeometry(QtCore.QRect(int(20 * width/924),
-                                                           int(10 * height/667),
-                                                           int(881 * width/924),
+        self.verticalLayoutWidget.setGeometry(QtCore.QRect(int(5 * width/924),
+                                                           int(0 * height/667),
+                                                           int(826 * width/924),
                                                            int(481 * height * (get_player_count()/2) / 6670)))
         self.field_factor.align(32 * width / 924, 160 * width / 924,
-                                int((100 + 481 * (get_player_count()/2)) * height / 6670),
+                                int(((481 * (get_player_count()/2)) - 50) * height / 6670),
                                 555 * width / 924, 20 * height / 667)
+        self.Main.setGeometry(QtCore.QRect(int(20 * width/924), int(10 * height/667),
+                                           int(875 * width/924), int(526 * height/667)))
+        self.scrollAreaWidgetContents.setGeometry(
+            QtCore.QRect(0, 0, int(840 * width/924), int((481 * (get_player_count()/2) + 350) * height / 6670)))

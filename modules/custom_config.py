@@ -82,3 +82,21 @@ def get_auto_update():
     :return: булева переменная - наличие автоообновлений
     """
     return get_bool_data('auto_update')
+
+
+def get_max_player_count():
+    """
+    Находит значение максимально возможного количества игроков в файле
+
+    :return: количество игроков
+    """
+    return get_int_data('max_player_count')
+
+
+def get_max_match_count():
+    """
+    Находит значение максимально возможного количества матчей в файле
+
+    :return: количество матчей
+    """
+    return get_int_data('max_match_count')

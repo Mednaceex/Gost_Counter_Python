@@ -23,7 +23,7 @@ class Window(QtWidgets.QMainWindow):
         super(Window, self).__init__()
         self.ui = MainWindow(self)
         self.matches = Matches()
-        self.teams = Teams()
+        self.teams = Teams(self)
         self.settings = Settings(self)
         self.results = Results()
         self.bet_texts = []
@@ -206,6 +206,7 @@ class Window(QtWidgets.QMainWindow):
         """
         Показывает окно настройки матчей
         """
+        self.matches.update_settings()
         self.matches.show_on_top()
         self.matches.config_teams()
         self.matches.set_names()
@@ -214,6 +215,7 @@ class Window(QtWidgets.QMainWindow):
         """
         Показывает окно настройки названий команд
         """
+        self.teams.update_settings()
         self.teams.show_on_top()
         self.teams.set_names()
 

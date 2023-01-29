@@ -3,7 +3,7 @@ from PyQt5 import QtCore
 from modules.paths import custom_txt
 from modules.text_functions import split, check_numbers
 from modules.classes import Dialog
-from modules.custom_config import get_player_count, get_match_count
+from modules.custom_config import get_player_count, get_match_count, get_max_player_count, get_max_match_count
 from windows.settings_ui import SettingsDialog
 
 
@@ -29,11 +29,16 @@ class Settings(Dialog):
             players = get_player_count()
         if matches == '':
             matches = get_match_count()
+        if int(players) > get_max_player_count():
+            players = str(get_max_player_count())
+        if int(matches) > get_max_match_count():
+            matches = str(get_max_match_count())
         has_additional = self.ui.has_additional.widget.isChecked()
         # update = self.ui.auto_update.widget.isChecked()
         update = False
         text = 'player_count=' + str(players) + '\nmatch_count=' +\
-               str(matches) + '\nhas_additional=' + str(has_additional) + '\nauto_update=' + str(update)
+               str(matches) + '\nhas_additional=' + str(has_additional) + '\nauto_update=' + str(update) + \
+               '\nmax_player_count=' + str(get_max_player_count()) + '\nmax_match_count=' + str(get_max_match_count())
         with open(custom_txt, 'w') as custom:
             print(text, file=custom)
         self.main_window.update_settings()

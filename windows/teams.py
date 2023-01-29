@@ -6,13 +6,14 @@ from windows.teams_ui import TeamsDialog
 
 
 class Teams(Dialog):
-    def __init__(self):
+    def __init__(self, main_window):
         """
         Конструктор класса окна настройки названий команд
         """
         super(Teams, self).__init__()
         self.ui = TeamsDialog(self)
         self.set_names()
+        self.main_window = main_window
         self.ui.buttonBox.accepted.connect(self.save)
         self.setWindowTitle('Настройка команд')
 
@@ -23,6 +24,7 @@ class Teams(Dialog):
         text = self.save_players()
         with open(players_txt, 'w') as players:
             print(sort_lines_alphabetical(text), file=players, end='')
+        self.main_window.update_settings()
 
     def save_players(self):
         """

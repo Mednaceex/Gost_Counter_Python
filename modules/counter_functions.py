@@ -189,17 +189,24 @@ def print_match_score_to_file(results_team1, results_team2, name_team1, name_tea
     :param field_factor: наличие фактора домашнего поля
     :param output_file: путь к файлу вывода
     """
-    if results_team1[0].valid:
-        if results_team2[0].valid:
+    if valid(results_team1):
+        if valid(results_team2):
             score = count_score(results_team1, results_team2, field_factor, get_match_count())
             print(name_team1, f'{score[0]}-{score[1]}', name_team2, file=output_file)
         else:
             print(name_team1, '3-0', name_team2, '(Тех.)', file=output_file)
     else:
-        if results_team2[0].valid:
+        if valid(results_team2):
             print(name_team1, '0-3', name_team2, '(Тех.)', file=output_file)
         else:
             print(name_team1, '0-0', name_team2, '(Тех.)', file=output_file)
+
+
+def valid(lst: list[Result]):
+    for i in lst:
+        if i.valid:
+            return True
+    return False
 
 
 def bets_from_text(text: str):
