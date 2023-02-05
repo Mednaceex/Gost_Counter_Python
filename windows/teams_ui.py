@@ -1,11 +1,13 @@
 from PyQt5 import QtCore, QtWidgets
+from modules.custom_config import get_current_league
 
-from modules.custom_config import get_player_count
 width, height = (756, 791)
 
 
-class TeamsDialog(object):
+class TeamsDialog:
     def __init__(self, dialog):
+        self.dialog = dialog
+        self.league = dialog.league
         dialog.resize(width, height)
         self.buttonBox = QtWidgets.QDialogButtonBox(dialog)
         self.buttonBox.setGeometry(QtCore.QRect(int(280 * width/756), int(750 * height/791),
@@ -45,14 +47,14 @@ class TeamsDialog(object):
         QtCore.QMetaObject.connectSlotsByName(dialog)
 
     def retranslate_ui(self):
-        for i in range(get_player_count()):
+        for i in range(self.league.get_player_count()):
             self.label[i].setText(self._translate("Dialog", f"{i + 1}."))
         self.label_team_name.setText(self._translate("Dialog", "Название команды"))
         self.label_coach_name.setText(self._translate("Dialog", "Тренер"))
 
     def set_spacers(self):
         self.spacers = []
-        for i in range(get_player_count()):
+        for i in range(self.league.get_player_count()):
             self.spacers.append(QtWidgets.QSpacerItem(int(25 * width / 756), int(20 * height / 791)))
             self.spacers.append(QtWidgets.QSpacerItem(int(6 * width/756), int(20 * height/791)))
 
@@ -61,7 +63,7 @@ class TeamsDialog(object):
         self.teams = []
         self.names = []
         self.set_spacers()
-        for i in range(get_player_count()):
+        for i in range(self.league.get_player_count()):
             horizontal_layout = QtWidgets.QHBoxLayout(self.scrollAreaWidgetContents)
             self.label.append(QtWidgets.QLabel(self.scrollAreaWidgetContents))
             self.label[i].setFixedWidth(20)
@@ -87,6 +89,7 @@ class TeamsDialog(object):
 
     def update_settings(self):
         self.remove_teams()
+        self.league = self.dialog.league
         self.set_size()
         self.set_teams()
         self.retranslate_ui()
@@ -95,6 +98,7 @@ class TeamsDialog(object):
         self.Main.setGeometry(QtCore.QRect(int(10 * width/756), int(37 * height/791),
                                            int(738 * width/756), int(698 * height/791)))
         self.scrollAreaWidgetContents.setGeometry(
-            QtCore.QRect(int(10 * width/756), 0, int(715 * width/756), int(742 * height * get_player_count()/15820)))
+            QtCore.QRect(int(10 * width/756), 0, int(715 * width/756),
+                         int(742 * height * self.league.get_player_count()/15820)))
         self.title_widget.setGeometry(QtCore.QRect(int(10 * width/756), int(2 * height/791),
                                                    int(738 * width/756), int(30 * height/791)))

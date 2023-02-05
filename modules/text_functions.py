@@ -29,6 +29,26 @@ def check_ascii_russian(string: str):
     return new_string
 
 
+def change_space_to_underscore(string: str):
+    """
+    Заменяет пробелы в строке подчёркиваниями
+
+    :param string: строка
+    :return: обработанная строка
+    """
+    return string.replace(' ', '_')
+
+
+def change_underscore_to_space(string: str):
+    """
+    Заменяет подчёркивания в строке пробелами
+
+    :param string: строка
+    :return: обработанная строка
+    """
+    return string.replace('_', ' ')
+
+
 def check_numbers(string: str):
     """
     Исключает из строки все символы, не являющиеся цифрами

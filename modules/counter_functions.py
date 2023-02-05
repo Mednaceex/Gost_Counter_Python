@@ -1,8 +1,6 @@
 from modules.const import numbers, long_seps, seps
 from modules.text_functions import split
-from modules.classes import Better, BetResult, AddBetResult, Result
-from modules.custom_config import get_match_count, get_has_additional
-from modules.paths import errors_txt
+from modules.classes import Better, BetResult, AddBetResult, Result, League
 
 
 def count_bet(bet1: int, bet2: int, score1: int, score2: int):
@@ -33,18 +31,19 @@ def count_additional(bet: bool, result: bool):
     return AddBetResult((bet == result) & (result != 'None'))
 
 
-def get_players(file):
+def get_players(file, league: League):
     """
     Считывает названия команд и имена тренеров из файла, создаёт список объектов класса Better с этими данными
 
     :param file: путь к файлу
+    :param league: лига игрока
     :return: список объектов класса Better
     """
     array = []
     text = file.readlines()
     for line in text:
         a = split(line, ' - ')
-        b = Better(a[0])
+        b = Better(league, a[0])
         array.append(b)
     return array
 
@@ -70,19 +69,18 @@ def get_player_names(betters_array):
     return [better.name + ' (' + better.player_name + ')' for better in betters_array]
 
 
-def count_all_bets(name, bets_list, scores_list, betters_list, add_bet=None, add_score=None):
+def count_all_bets(better: Better, bets_list, scores_list, add_bet=None, add_score=None):
     """
     Определяет результаты всех ставок игрока
 
-    :param name: название команды
+    :param better: игрок
     :param bets_list: список ставок игрока
     :param scores_list: список счетов реальных матчей
-    :param betters_list: список игроков (объектов класса Better)
     :param add_bet: дополнительная ставка
     :param add_score: исход дополнительной ставки
     """
     results_list = []
-    bets = ['None'] * (get_match_count() + int(get_has_additional()))
+    bets = ['None'] * (better.league.get_match_count() + int(better.league.get_has_additional()))
     for i, bet in enumerate(bets_list):
         if bet == '':
             bets[i] = 'None'
@@ -93,25 +91,19 @@ def count_all_bets(name, bets_list, scores_list, betters_list, add_bet=None, add
             results_list += [count_bet(int(bet[0]), int(bet[1]), int(scores_list[i][0]), int(scores_list[i][1]))]
         else:
             results_list += [Result(valid=False)]
-    if get_has_additional():
-        results_list[get_match_count()] = count_additional(add_bet, add_score)
-    set_player_results(betters_list, name, results_list)
+    if better.league.get_has_additional():
+        results_list[better.league.get_match_count()] = count_additional(add_bet, add_score)
+    better.set_results(results_list)
 
 
-def set_player_results(betters_list, name, results_list):
-
-    for i in betters_list:
-        if i.name == name:
-            i.set_results(results_list)
-
-
-def count_score(results_team1: list[Result], results_team2: list[Result], field_factor: bool, count):
+def count_score(results_team1: list[Result], results_team2: list[Result], field_factor: bool, count, has_additional):
     """
     Рассчитывает счёт в матче по спискам результатов каждой ставки
     :param results_team1: список результатов ставок первой команды (объектов класса Result)
     :param results_team2: список результатов ставок второй команды (объектов класса Result)
     :param field_factor: наличие или отсутствие фактора домашнего поля
     :param count: количество матчей в госте
+    :param has_additional: наличие или отсутствие дополнительной ставки
     :return: счёт в матче (кортеж из двух значений - итоговое количество голов каждой команды)
     """
     score1 = 0
@@ -131,7 +123,7 @@ def count_score(results_team1: list[Result], results_team2: list[Result], field_
         elif not results_team1[i].winner and results_team2[i].winner:
             score2 += 1
 
-    if get_has_additional():
+    if has_additional:
         if results_team1[count].result and not results_team2[count].result:
             score1 += 1
         if not results_team1[count].result and results_team2[count].result:
@@ -139,7 +131,8 @@ def count_score(results_team1: list[Result], results_team2: list[Result], field_
     return score1, score2
 
 
-def get_match(match: list[str, str], output_file, betters_list: list[Better], field_factor: bool):
+def get_match(match: list[str, str], output_file, errors_file, betters_list: list[Better], field_factor: bool,
+                              match_count, has_additional):
     """
     Считывает матч из строки расписания и выводит его счёт в файл вывода
 
@@ -147,6 +140,9 @@ def get_match(match: list[str, str], output_file, betters_list: list[Better], fi
     :param field_factor: наличие фактора домашнего поля
     :param betters_list: список игроков (объектов класса Better)
     :param output_file: путь к файлу вывода
+    :param errors_file: путь к файлу ошибок
+    :param match_count: количество матчей в госте
+    :param has_additional: наличие или отсутствие дополнительной ставки
     """
     results = [[]] * 2
     name = [''] * 2
@@ -155,10 +151,12 @@ def get_match(match: list[str, str], output_file, betters_list: list[Better], fi
             if better.name == match[k]:
                 results[k] = better.results
                 name[k] = better.name
-    print_match_score(results[0], results[1], name[0], name[1], field_factor, output_file)
+    print_match_score(results[0], results[1], name[0], name[1], field_factor, output_file, errors_file,
+                              match_count, has_additional)
 
 
-def print_match_score(results_team1, results_team2, name_team1, name_team2, field_factor, output_file):
+def print_match_score(results_team1, results_team2, name_team1, name_team2, field_factor, output_file, errors_file,
+                              match_count, has_additional):
     """
     Считает и выводит счёт матча из строки расписания в файл вывода, проверяет на случай технического поражения или
     ничьей при ошибках в количестве ставок, выводит сообщение об ошибке в случае недостатка указанных команд
@@ -169,15 +167,21 @@ def print_match_score(results_team1, results_team2, name_team1, name_team2, fiel
     :param name_team2: название первой команды
     :param field_factor: наличие фактора домашнего поля
     :param output_file: путь к файлу вывода
+    :param errors_file: путь к файлу ошибок
+    :param match_count: количество матчей в госте
+    :param has_additional: наличие или отсутствие дополнительной ставки
     """
     try:
-        print_match_score_to_file(results_team1, results_team2, name_team1, name_team2, field_factor, output_file)
+        with open(output_file, 'a') as output:
+            print_match_score_to_file(results_team1, results_team2, name_team1, name_team2, field_factor, output,
+                                      match_count, has_additional)
     except IndexError:
-        with open(errors_txt, 'w') as error_file:
-            print("Ошибка - недостаточно команд указано", file=error_file)
+        with open(errors_file, 'w') as errors:
+            print("Ошибка - недостаточно команд указано", file=errors)
 
 
-def print_match_score_to_file(results_team1, results_team2, name_team1, name_team2, field_factor, output_file):
+def print_match_score_to_file(results_team1, results_team2, name_team1, name_team2, field_factor, output_file,
+                              match_count, has_additional):
     """
     Считает и выводит счёт матча из строки расписания в файл вывода, проверяет на случай технического поражения или
     ничьей при ошибках в количестве ставок
@@ -188,10 +192,12 @@ def print_match_score_to_file(results_team1, results_team2, name_team1, name_tea
     :param name_team2: название первой команды
     :param field_factor: наличие фактора домашнего поля
     :param output_file: путь к файлу вывода
+    :param match_count: количество матчей в госте
+    :param has_additional: наличие или отсутствие дополнительной ставки
     """
     if valid(results_team1):
         if valid(results_team2):
-            score = count_score(results_team1, results_team2, field_factor, get_match_count())
+            score = count_score(results_team1, results_team2, field_factor, match_count, has_additional)
             print(name_team1, f'{score[0]}-{score[1]}', name_team2, file=output_file)
         else:
             print(name_team1, '3-0', name_team2, '(Тех.)', file=output_file)

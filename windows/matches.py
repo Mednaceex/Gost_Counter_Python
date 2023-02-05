@@ -1,18 +1,20 @@
 from PyQt5 import QtCore
 
-from modules.paths import matches_txt, players_txt
 from modules.text_functions import split, get_rid_of_slash_n
-from modules.classes import Dialog
-from modules.custom_config import get_player_count
+from modules.classes import Dialog, League
 from windows.matches_ui import MatchesDialog
 
 
 class Matches(Dialog):
-    def __init__(self):
+    def __init__(self, main_window, league: League):
         """
         Конструктор класса окна настройки матчей
+
+        :param league: лига, в которой проходят матчи
         """
         super(Matches, self).__init__()
+        self.league = league
+        self.main_window = main_window
         self.ui = MatchesDialog(self)
         self.config_teams()
         self.set_names()
@@ -24,7 +26,7 @@ class Matches(Dialog):
         """
         Сохраняет данные о матчах в файл, вызывается при нажатии на кнопку "Сохранить"
         """
-        self.save_matches(matches_txt)
+        self.save_matches(self.league.get_matches_txt())
 
     def save_matches(self, file):
         """
@@ -34,7 +36,7 @@ class Matches(Dialog):
         """
         text = 'field_factor='
         text += 'True' if self.ui.field_factor.widget.isChecked() else 'False'
-        for i in range(int(get_player_count() / 2)):
+        for i in range(int(self.league.get_player_count() / 2)):
             name = [''] * 2
             for j in range(2):
                 name[j] = self.ui.teams[i][j].currentText()
@@ -48,47 +50,49 @@ class Matches(Dialog):
 
         :return: True, если повторения есть, False иначе
         """
-        teams = [''] * get_player_count()
-        matches = self.read_matches()
+        self.league = self.main_window.league
+        teams = [''] * self.league.get_player_count()
+        matches = self.read_matches(self.league)
         for i, line in enumerate(matches):
-            if i >= int(get_player_count() / 2):
+            if i >= int(self.league.get_player_count() / 2):
                 break
             for j in range(2):
                 teams[2 * i + j] = matches[i][j]
         return False if len(set(teams)) == len(teams) else True
 
-    @staticmethod
-    def read_teams():
+    def read_teams(self):
         """
         Считывает названия команд из файла
 
         :return: список названий команд
         """
-        with open(players_txt, 'r') as players:
+        with open(self.league.get_players_txt(), 'r') as players:
             text = players.readlines()
         names = [split(line, ' - ')[0] for line in text]
         return names
 
     @staticmethod
-    def read_matches():
+    def read_matches(league):
         """
         Считывает матчи из файла
 
+        :param league: лига, в которой проходят матчи
         :return: список матчей (каждый элемент списка - список из двух названий команд)
         """
-        with open(matches_txt, 'r') as matches:
+        with open(league.get_matches_txt(), 'r') as matches:
             text = matches.readlines()
         matches = [split(line, ' - ') for i, line in enumerate(text)]
         return matches[1::]
 
     @staticmethod
-    def read_field_factor():
+    def read_field_factor(league):
         """
         Считывает данные о факторе домашнего поля из файла
 
+        :param league: лига, в которой проходят матчи
         :return: булева переменная - наличие или отсутствие домашнего фактора
         """
-        with open(matches_txt, 'r') as matches:
+        with open(league.get_matches_txt(), 'r') as matches:
             f = get_rid_of_slash_n(matches.readline())
         return f == 'field_factor=True'
 
@@ -97,7 +101,7 @@ class Matches(Dialog):
         Обновляет выпадающий список команд в окне настройки матчей
         """
         names = self.read_teams()
-        for i in range(int(get_player_count() / 2)):
+        for i in range(int(self.league.get_player_count() / 2)):
             for j in range(2):
                 self.ui.teams[i][j].clear()
                 self.ui.teams[i][j].addItems(names)
@@ -106,9 +110,9 @@ class Matches(Dialog):
         """
         Устанавливает нужные названия команд из списка в соответствии с сохранёнными данными в файле
         """
-        matches = self.read_matches()
+        matches = self.read_matches(self.league)
         for i, line in enumerate(matches):
-            if i >= int(get_player_count() / 2):
+            if i >= int(self.league.get_player_count() / 2):
                 break
             index = [0] * 2
             for j in range(2):
@@ -119,13 +123,14 @@ class Matches(Dialog):
         """
         Устанавливает наличие или отсутствие домашнего фактора в соответствии с сохранёнными данными в файле
         """
-        if self.read_field_factor():
+        if self.read_field_factor(self.league):
             self.ui.field_factor.widget.setCheckState(QtCore.Qt.Checked)
 
     def update_settings(self):
         """
         Обновляет параметры главного окна в соответствии с пользовательскими настройками
         """
+        self.league = self.main_window.league
         self.ui.update_settings()
         self.config_teams()
         self.set_names()

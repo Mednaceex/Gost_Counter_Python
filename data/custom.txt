@@ -1,6 +1,0 @@
-player_count=20
-match_count=10
-has_additional=True
-auto_update=False
-max_player_count=200
-max_match_count=15

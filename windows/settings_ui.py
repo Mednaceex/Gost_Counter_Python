@@ -6,7 +6,7 @@ width, height = (924, 667)
     (10 * width/924, 345 * width/924, 15 * height/667, 555 * width/924, 20 * height/667, 20 * height/667)
 
 
-class SettingsDialog(object):
+class SettingsDialog:
     def __init__(self, dialog):
         dialog.resize(width, height)
         self.central_widget = QtWidgets.QWidget(dialog)
@@ -22,7 +22,7 @@ class SettingsDialog(object):
         self.match_count = Line(self.central_widget, QtWidgets.QLineEdit(self.central_widget))
         self.has_additional = Line(self.central_widget, QtWidgets.QCheckBox(self.central_widget))
         # self.auto_update = Line(self.central_widget, QtWidgets.QCheckBox(self.central_widget),
-                                # True, QtWidgets.QPushButton(self.central_widget))
+        # True, QtWidgets.QPushButton(self.central_widget))
         for index, line in enumerate((self.player_count, self.match_count, self.has_additional,  # self.auto_update
                                       )):
             line.align(x1, x2, y + (h + gap) * index, ww, h)
@@ -39,5 +39,5 @@ class SettingsDialog(object):
         self.has_additional.label.setText(_translate("Dialog", "Дополнительная ставка"))
         # self.auto_update.label.setText(_translate("Dialog", "Автоматическая проверка обновлений (в разработке)"))
         # self.auto_update.hint_label.setText(_translate("Dialog", "При отключении этой опции вы сможете\n"
-                                                                 # "проверить наличие обновлений здесь: (в разработке)"))
+        # "проверить наличие обновлений здесь: (в разработке)"))
         # self.auto_update.hint_widget.setText(_translate("Dialog", "Проверить обновления"))

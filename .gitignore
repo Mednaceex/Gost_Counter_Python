@@ -133,14 +133,4 @@ dmypy.json
 
 backups/
 UI Designer
-
-data/checks.txt
-data/saved.txt
-data/scores.txt
-data/errors.txt
-data/matches.txt
-data/output.txt
-data/custom.txt
-data/players.txt
-data/additional.txt
 updates/

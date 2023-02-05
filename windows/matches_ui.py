@@ -1,13 +1,14 @@
 from PyQt5 import QtCore, QtWidgets
 
-from modules.custom_config import get_player_count
 from modules.templates import Line
 width, height = (924, 667)
 
 
-class MatchesDialog(object):
+class MatchesDialog:
     def __init__(self, dialog):
+        self.dialog = dialog
         dialog.resize(width, height)
+        self.league = dialog.league
         self.central_widget = QtWidgets.QWidget()
 
         self.Main = QtWidgets.QScrollArea(self.central_widget)
@@ -24,7 +25,7 @@ class MatchesDialog(object):
         self.verticalLayoutWidget = QtWidgets.QWidget(self.scrollAreaWidgetContents)
         self.verticalLayout = QtWidgets.QVBoxLayout(self.verticalLayoutWidget)
         self.teams = []
-        for i in range(int(get_player_count() / 2)):
+        for i in range(int(self.league.get_player_count() / 2)):
             self.teams.append([])
             horizontal_layout = QtWidgets.QHBoxLayout()
             for j in range(2):
@@ -50,12 +51,13 @@ class MatchesDialog(object):
         self.field_factor.label.setText(_translate("Dialog", "Домашний фактор"))
 
     def update_settings(self):
+        self.league = self.dialog.league
         for pair in self.teams:
             for item in pair:
                 self.verticalLayout.removeWidget(item)
         self.set_size()
         self.teams = []
-        for i in range(int(get_player_count() / 2)):
+        for i in range(int(self.league.get_player_count() / 2)):
             self.teams.append([])
             horizontal_layout = QtWidgets.QHBoxLayout()
             for j in range(2):
@@ -64,14 +66,13 @@ class MatchesDialog(object):
             self.verticalLayout.addLayout(horizontal_layout)
 
     def set_size(self):
-        self.verticalLayoutWidget.setGeometry(QtCore.QRect(int(5 * width/924),
-                                                           int(0 * height/667),
-                                                           int(826 * width/924),
-                                                           int(481 * height * (get_player_count()/2) / 6670)))
+        self.verticalLayoutWidget.setGeometry(QtCore.QRect(
+            int(5 * width/924), int(0 * height/667), int(826 * width/924),
+            int(481 * height * (self.league.get_player_count()/2) / 6670)))
         self.field_factor.align(32 * width / 924, 160 * width / 924,
-                                int(((481 * (get_player_count()/2)) - 50) * height / 6670),
+                                int(((481 * (self.league.get_player_count()/2)) - 50) * height / 6670),
                                 555 * width / 924, 20 * height / 667)
         self.Main.setGeometry(QtCore.QRect(int(20 * width/924), int(10 * height/667),
                                            int(875 * width/924), int(526 * height/667)))
-        self.scrollAreaWidgetContents.setGeometry(
-            QtCore.QRect(0, 0, int(840 * width/924), int((481 * (get_player_count()/2) + 350) * height / 6670)))
+        self.scrollAreaWidgetContents.setGeometry(QtCore.QRect(
+            0, 0, int(840 * width/924), int((481 * (self.league.get_player_count()/2) + 350) * height / 6670)))

@@ -1,11 +1,44 @@
 from pathlib import Path
+from shutil import rmtree
 
-saved_txt = Path('data', 'saved.txt')
-errors_txt = Path('data', 'errors.txt')
-checks_txt = Path('data', 'checks.txt')
-scores_txt = Path('data', 'scores.txt')
-matches_txt = Path('data', 'matches.txt')
-output_txt = Path('data', 'output.txt')
-players_txt = Path('data', 'players.txt')
-custom_txt = Path('data', 'custom.txt')
-additional_txt = Path('data', 'additional.txt')
+
+def get_path(league_name, file_name):
+    """
+    Создаёт объект пути к нужному файлу в лиге
+
+    :param league_name: название лиги
+    :param file_name: название файла
+    :return: путь (объект класса pathlib.Path)
+    """
+    return Path('data', 'leagues', league_name, file_name)
+
+
+def get_default_settings_txt():
+    return Path('data', 'default_settings.txt')
+
+
+def get_current_league_txt():
+    return Path('data', 'current.txt')
+
+
+def get_leagues_txt():
+    return Path('data', 'leagues.txt')
+
+
+def rename_folder(old_name: str, new_name: str):
+    p = Path('data', 'leagues', old_name)
+    p.rename(Path('data', 'leagues', new_name))
+
+
+def delete_league_folder(league_name):
+    p = Path('data', 'leagues', league_name)
+    rmtree(p)
+
+
+def init_league(league_name: str):
+    p = Path('data', 'leagues', league_name)
+    p.mkdir()
+    for file_name in ['additional.txt', 'checks.txt', 'scores.txt', 'custom.txt', 'errors.txt', 'matches.txt',
+                      'saved.txt', 'output.txt', 'players.txt']:
+        with open(get_path(league_name, file_name), 'w+'):
+            pass

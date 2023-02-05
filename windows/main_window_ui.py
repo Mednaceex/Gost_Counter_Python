@@ -1,11 +1,13 @@
 from PyQt5 import QtCore, QtWidgets
+from modules.custom_config import get_current_league
 
-from modules.custom_config import get_player_count, get_match_count, get_has_additional
 width, height = (1204, 881)
 
 
-class MainWindow(object):
+class MainWindow:
     def __init__(self, main_window):
+        self.main_window = main_window
+        self.update_league()
         main_window.setEnabled(True)
         main_window.resize(width, height)
         self.central_widget = QtWidgets.QWidget(main_window)
@@ -45,7 +47,7 @@ class MainWindow(object):
         self.init_buttons()
         self.init_matches()
         self.set_additional()
-        if get_has_additional():
+        if self.league.get_has_additional():
             self.init_additional()
 
         main_window.setCentralWidget(self.central_widget)
@@ -63,21 +65,21 @@ class MainWindow(object):
         self.retranslate_boxes()
         self.retranslate_buttons()
         self.retranslate_matches()
-        if get_has_additional():
+        if self.league.get_has_additional():
             self.retranslate_additional()
 
     def retranslate_boxes(self):
-        for i in range(get_player_count()):
+        for i in range(self.league.get_player_count()):
             self.box_list[i].name.setText(self._translate("MainWindow", f"{i + 1}"))
-            for j in range(get_match_count()):
+            for j in range(self.league.get_match_count()):
                 self.box_list[i].labels[j].setText(self._translate("MainWindow", f"{j + 1}"))
-            if get_has_additional():
+            if self.league.get_has_additional():
                 self.box_list[i].add_yes_label.setText(self._translate("MainWindow", "Да"))
                 self.box_list[i].add_no_label.setText(self._translate("MainWindow", "Нет"))
                 self.box_list[i].add_label.setText(self._translate("MainWindow", "Доп. ставка"))
 
     def retranslate_matches(self):
-        for i in range(get_match_count()):
+        for i in range(self.league.get_match_count()):
             self.match_labels[i].setText(self._translate("MainWindow", f"Матч {i + 1}"))
             self.two_dots_labels[i].setText(self._translate("MainWindow", ":"))
 
@@ -93,6 +95,13 @@ class MainWindow(object):
         self.Matches_Button.setText(self._translate("MainWindow", "Настроить матчи"))
         self.Teams_Button.setText(self._translate("MainWindow", "Изменить команды"))
         self.Settings_Button.setText(self._translate("MainWindow", "Настройки"))
+        self.Leagues_Button.setText(self._translate("MainWindow", f"Текущая лига: {self.league.name}"))
+
+    def set_league_name(self, league_name: str):
+        self.Leagues_Button.setText(self._translate("MainWindow", f"Текущая лига: {league_name}"))
+
+    def update_league(self):
+        self.league = self.main_window.league
 
     def update_settings(self):
         self.remove_matches()
@@ -102,9 +111,10 @@ class MainWindow(object):
         self.init_boxes()
         self.retranslate_boxes()
         self.retranslate_matches()
-        if get_has_additional():
+        if self.league.get_has_additional():
             self.init_additional()
             self.retranslate_additional()
+        self.set_league_name(get_current_league())
 
     def remove_additional(self):
         self.matchLayout.removeItem(self.additional_layout)
@@ -150,10 +160,12 @@ class MainWindow(object):
         self.Button_Layout_2.addWidget(self.Teams_Button)
         self.Settings_Button = QtWidgets.QPushButton(self.verticalLayoutWidget_22)
         self.Button_Layout_2.addWidget(self.Settings_Button)
+        self.Leagues_Button = QtWidgets.QPushButton(self.verticalLayoutWidget_22)
+        self.Button_Layout_2.addWidget(self.Leagues_Button)
 
     def init_boxes(self):
         self.box_list = []
-        for i in range(int(get_player_count() / 2)):
+        for i in range(int(self.league.get_player_count() / 2)):
             row = QtWidgets.QScrollArea(self.scrollAreaWidgetContents_82)
             self.size_policy_exp_fixed.setHeightForWidth(row.sizePolicy().hasHeightForWidth())
             row.setSizePolicy(self.size_policy_exp_fixed)
@@ -162,13 +174,13 @@ class MainWindow(object):
             self.scrollAreaWidgetContents.setGeometry(QtCore.QRect(0, 0, int(114 * width/1204), int(30 * height/881)))
             horizontal_layout = QtWidgets.QHBoxLayout(self.scrollAreaWidgetContents)
             for k in range(2):
-                box = Box()
+                box = Box(self.league.get_match_count(), self.league.get_has_additional())
                 horizontal_layout.addWidget(box)
                 self.box_list.append(box)
             row.setWidget(self.scrollAreaWidgetContents)
             self.boxLayout.addWidget(row)
-        if get_player_count() % 2 == 1:
-            box = Box()
+        if self.league.get_player_count() % 2 == 1:
+            box = Box(self.league.get_match_count(), self.league.get_has_additional())
             self.box_list.append(box)
             self.boxLayout.addWidget(box)
 
@@ -177,7 +189,7 @@ class MainWindow(object):
         self.two_dots_labels = []
         self.scores = []
         self.spacers = []
-        for i in range(get_match_count()):
+        for i in range(self.league.get_match_count()):
             vertical_layout = QtWidgets.QVBoxLayout()
             vertical_layout.setContentsMargins(-1, 0, -1, -1)
             self.match_labels.append(QtWidgets.QLabel(self.widget))
@@ -193,7 +205,7 @@ class MainWindow(object):
             score_layout.addWidget(self.scores[i][1])
             vertical_layout.addLayout(score_layout)
             self.matchLayout.addLayout(vertical_layout)
-            if i < get_match_count() - 1:
+            if i < self.league.get_match_count() - 1:
                 spacer = QtWidgets.QSpacerItem(int(15 * width/1204), int(40 * height/881),
                                                QtWidgets.QSizePolicy.Minimum, QtWidgets.QSizePolicy.Expanding)
                 self.matchLayout.addItem(spacer)
@@ -219,7 +231,7 @@ class MainWindow(object):
 
 
 class Box(QtWidgets.QWidget):
-    def __init__(self):
+    def __init__(self, match_count, has_additional):
         super(Box, self).__init__()
         self.setGeometry(QtCore.QRect(0, 0, int(560 * width/1204), int(287 * height/881)))
         self.verticalLayout = QtWidgets.QVBoxLayout(self)
@@ -232,7 +244,7 @@ class Box(QtWidgets.QWidget):
         checks_layout.setContentsMargins(-1, -1, -1, 0)
         self.labels = []
         self.checks = []
-        for j in range(get_match_count()):
+        for j in range(match_count):
             check_layout = QtWidgets.QVBoxLayout()
             check_layout.setContentsMargins(-1, -1, 0, 0)
             self.labels.append(QtWidgets.QLabel(self))
@@ -243,7 +255,7 @@ class Box(QtWidgets.QWidget):
             checks_layout.addLayout(check_layout)
         self.verticalLayout.addLayout(checks_layout)
 
-        if get_has_additional():
+        if has_additional:
             self.add_yes = QtWidgets.QCheckBox(self)
             self.add_no = QtWidgets.QCheckBox(self)
             self.add_yes_label = QtWidgets.QLabel(self)
