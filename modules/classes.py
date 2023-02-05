@@ -39,7 +39,6 @@ class League:
         :return: значение настройки
         """
         a = self.get_custom_txt()
-        print(self.folder_name)
         with open(a, 'r') as custom:
             text = custom.readlines()
         for line in text:
