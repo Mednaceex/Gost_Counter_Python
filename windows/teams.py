@@ -1,31 +1,34 @@
 from modules.text_functions import split, sort_lines_alphabetical, check_ascii_russian
 from modules.classes import Dialog, League
-from windows.teams_ui import TeamsDialog
+from windows.teams_ui import TeamsUI
 
 
 class Teams(Dialog):
     def __init__(self, main_window, league: League):
         """
-        Конструктор класса окна настройки названий команд
+        Конструктор диалогового окна настройки команд
 
+        :param main_window: главное окно
         :param league: лига, в которой играют команды
         """
         super(Teams, self).__init__()
         self.league = league
-        self.ui = TeamsDialog(self)
+        self.ui = TeamsUI(self)
         self.set_names()
         self.main_window = main_window
-        self.ui.buttonBox.accepted.connect(self.save)
+        self.ui.Choose_Button.clicked.connect(self.save)
+        self.ui.Cancel_Button.clicked.connect(self.close)
         self.setWindowTitle('Настройка команд')
 
     def save(self):
         """
-        Сохраняет названия команд и имена игроков в файл
+        Сохраняет названия команд и имена игроков в файл, закрывает окно
         """
         text = self.save_players()
         with open(self.league.get_players_txt(), 'w') as players:
             print(sort_lines_alphabetical(text), file=players, end='')
         self.main_window.update_settings()
+        self.close()
 
     def save_players(self):
         """

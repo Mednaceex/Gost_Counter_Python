@@ -1,7 +1,7 @@
 from PyQt5 import QtWidgets, QtCore
 
 from modules.paths import get_path
-from modules.text_functions import split, change_space_to_underscore
+from modules.text_functions import split, change_space_to_underscore, change_underscore_to_space, get_data
 
 
 class League:
@@ -13,7 +13,7 @@ class League:
         :param folder_name: название папки, в которой хранятся данные лиги
         (при отсутствии параметра идентично названию лиги)
         """
-        self.name = league_name
+        self.name = change_underscore_to_space(league_name)
         self.folder_name = change_space_to_underscore(league_name) if folder_name is None else folder_name
 
     def get_custom_data(self):
@@ -31,34 +31,27 @@ class League:
             d[param] = value
         return d
 
-    def get_int_data(self, txt: str):
+    def get_int_data(self, setting: str):
         """
         Находит пользовательское значение настройки, имеющей целочисленное значение, в файле
 
-        :param txt: название настройки
+        :param setting: название настройки
         :return: значение настройки
         """
-        a = self.get_custom_txt()
-        with open(a, 'r') as custom:
+        with open(self.get_custom_txt(), 'r') as custom:
             text = custom.readlines()
-        for line in text:
-            lst = split(line, '=')
-            if lst[0] == txt:
-                return int(lst[1])
+        return int(get_data(text, setting))
 
-    def get_bool_data(self, txt: str):
+    def get_bool_data(self, setting: str):
         """
         Находит пользовательское значение настройки, имеющей только булевы значения, в файле
 
-        :param txt: название настройки
+        :param setting: название настройки
         :return: булева переменная
         """
         with open(self.get_custom_txt(), 'r') as custom:
             text = custom.readlines()
-        for line in text:
-            lst = split(line, '=')
-            if lst[0] == txt:
-                return lst[1] == "True"
+        return get_data(text, setting) == "True"
 
     def get_has_additional(self):
         """
@@ -128,13 +121,10 @@ class Result:
         :param valid: определяет, имеется ли ставка в наличии
         """
         self.valid = valid
-        self.winner = False
-        self.diff = False
-        self.exact = False
-        self.result = False
-
-    def __repr__(self):
-        return str(self.winner) + str(self.diff) + str(self.exact)
+        self.result = False  # угаданный исход матча
+        self.diff = False  # угаданная разница голов
+        self.exact = False  # угаданный точный счёт
+        self.winner = False  # угаданный исход дополнительной ставки
 
 
 class BetResult(Result):
@@ -175,9 +165,8 @@ class Better:
         self.name = name
         self.league = league
         self.player_name = self.get_name()
-        if results is None:
-            self.results =\
-                [Result(valid=False)] * (self.league.get_match_count() + int(self.league.get_has_additional()))
+        if results is None:  # задаёт стандартное значение результатов игрока - ничего не угадано
+            self.results = [Result(valid=False)] * (self.league.get_match_count()+int(self.league.get_has_additional()))
         else:
             self.results = results
 
@@ -193,14 +182,9 @@ class Better:
 
         :return: имя игрока (строка)
         """
-        name = ''
         with open(self.league.get_players_txt(), 'r') as players:
             text = players.readlines()
-        for line in text:
-            player = split(line, ' - ')
-            if player[0] == self.name:
-                name = player[1]
-        return name
+        return get_data(text, self.name, ' - ')
 
 
 class BetText:
@@ -245,3 +229,34 @@ class Dialog(QtWidgets.QDialog):
         self.show()
         self.raise_()
         self.activateWindow()
+
+
+class ConfirmDialogUI:
+    def __init__(self, dialog):
+        """
+        Конструктор графического интерфейса диалогового окна с кнопками "Ок" и "Отмена"
+
+        :param dialog: диалоговое окно
+        """
+        self.button_widget = QtWidgets.QWidget(dialog)
+        self.button_layout = QtWidgets.QHBoxLayout(self.button_widget)
+        self.button_layout.removeWidget(self.button_widget)
+        self.Choose_Button = QtWidgets.QPushButton(self.button_widget)
+        self.button_layout.addWidget(self.Choose_Button)
+        self.Cancel_Button = QtWidgets.QPushButton(self.button_widget)
+        self.button_layout.addWidget(self.Cancel_Button)  # Каким-то магическим образом убирает двоящиеся кнопки
+
+    def set_standard_buttons(self):
+        """
+        Задаёт названия "Ок" и "Отмена" у кнопок
+        """
+        self.Choose_Button.setText("Ок")
+        self.Cancel_Button.setText("Отмена")
+
+
+class BetListError(Exception):
+    def __init__(self):
+        """
+        Конструктор класса ошибок, выдающихся при попытке посчитать список ставок при неправильном их количестве
+        """
+        super().__init__("Неправильное количество матчей в госте")

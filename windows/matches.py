@@ -2,7 +2,7 @@ from PyQt5 import QtCore
 
 from modules.text_functions import split, get_rid_of_slash_n
 from modules.classes import Dialog, League
-from windows.matches_ui import MatchesDialog
+from windows.matches_ui import MatchesUI
 
 
 class Matches(Dialog):
@@ -15,27 +15,29 @@ class Matches(Dialog):
         super(Matches, self).__init__()
         self.league = league
         self.main_window = main_window
-        self.ui = MatchesDialog(self)
+        self.ui = MatchesUI(self)
         self.config_teams()
         self.set_names()
         self.set_field_factor()
-        self.ui.buttonBox.accepted.connect(self.save)
+        self.ui.Choose_Button.clicked.connect(self.save)
+        self.ui.Cancel_Button.clicked.connect(self.close)
         self.setWindowTitle('Настройка матчей')
 
     def save(self):
         """
-        Сохраняет данные о матчах в файл, вызывается при нажатии на кнопку "Сохранить"
+        Сохраняет данные о матчах в файл, закрывает окно
         """
         self.save_matches(self.league.get_matches_txt())
+        self.close()
 
     def save_matches(self, file):
         """
-        Сохраняет данные о матчах в файл, создаёт сообщение об ошибке в случае
+        Сохраняет данные о матчах в файл
 
         :param file: путь к файлу
         """
         text = 'field_factor='
-        text += 'True' if self.ui.field_factor.widget.isChecked() else 'False'
+        text += str(self.ui.field_factor.widget.isChecked())
         for i in range(int(self.league.get_player_count() / 2)):
             name = [''] * 2
             for j in range(2):
@@ -58,7 +60,7 @@ class Matches(Dialog):
                 break
             for j in range(2):
                 teams[2 * i + j] = matches[i][j]
-        return False if len(set(teams)) == len(teams) else True
+        return len(set(teams)) != len(teams)  # Проверяет отсутствие повторений в списке
 
     def read_teams(self):
         """
@@ -82,7 +84,7 @@ class Matches(Dialog):
         with open(league.get_matches_txt(), 'r') as matches:
             text = matches.readlines()
         matches = [split(line, ' - ') for i, line in enumerate(text)]
-        return matches[1::]
+        return matches[1:]
 
     @staticmethod
     def read_field_factor(league):

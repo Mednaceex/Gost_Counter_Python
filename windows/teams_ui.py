@@ -1,28 +1,36 @@
 from PyQt5 import QtCore, QtWidgets
-from modules.custom_config import get_current_league
+
+from modules.classes import ConfirmDialogUI
 
 width, height = (756, 791)
 
 
-class TeamsDialog:
+class TeamsUI(ConfirmDialogUI):
     def __init__(self, dialog):
+        """
+        Конструктор графического интерфейса диалогового окна настройки команд
+        :param dialog: окно настройки команд
+        """
+        super().__init__(dialog)
         self.dialog = dialog
         self.league = dialog.league
         dialog.resize(width, height)
-        self.buttonBox = QtWidgets.QDialogButtonBox(dialog)
-        self.buttonBox.setGeometry(QtCore.QRect(int(280 * width/756), int(750 * height/791),
-                                                int(201 * width/756), int(32 * height/791)))
-        self.buttonBox.setOrientation(QtCore.Qt.Horizontal)
-        self.buttonBox.setStandardButtons(QtWidgets.QDialogButtonBox.Cancel | QtWidgets.QDialogButtonBox.Ok)
 
+        # Задание основного виджета и области с прокруткой
         self.Main = QtWidgets.QScrollArea(dialog)
         self.scrollAreaWidgetContents = QtWidgets.QWidget(dialog)
         self.title_widget = QtWidgets.QWidget(dialog)
-        self.set_size()
         self.Main.setStyleSheet("border: 0")
         self.Main.setWidgetResizable(False)
         self.Main.setWidget(self.scrollAreaWidgetContents)
 
+        # Инициализация атрибутов класса
+        self.spacers = []
+        self.label = []
+        self.teams = []
+        self.names = []
+
+        # Создание заголовочного виджета с подписями "Название команды" и "Тренер"
         self.horizontalLayoutWidget = QtWidgets.QWidget(dialog)
         self.spacing_layout = QtWidgets.QVBoxLayout()
         self.spacing_layout.setContentsMargins(-1, -1, -1, 0)
@@ -38,12 +46,13 @@ class TeamsDialog:
         self.label_coach_name = QtWidgets.QLabel(self.horizontalLayoutWidget)
         self.title_layout.addWidget(self.label_coach_name, 0, QtCore.Qt.AlignHCenter | QtCore.Qt.AlignVCenter)
         self.teams_layout = QtWidgets.QVBoxLayout(self.scrollAreaWidgetContents)
-        self.set_teams()
+
+        self.set_teams()  # Создание строк для ввода команд
+        self.set_size()
+        self.set_standard_buttons()
 
         self._translate = QtCore.QCoreApplication.translate
         self.retranslate_ui()
-        self.buttonBox.accepted.connect(dialog.accept)
-        self.buttonBox.rejected.connect(dialog.reject)
         QtCore.QMetaObject.connectSlotsByName(dialog)
 
     def retranslate_ui(self):
@@ -53,12 +62,18 @@ class TeamsDialog:
         self.label_coach_name.setText(self._translate("Dialog", "Тренер"))
 
     def set_spacers(self):
+        """
+        Создаёт виджеты для отступа перед каждой из строк для ввода текста
+        """
         self.spacers = []
         for i in range(self.league.get_player_count()):
             self.spacers.append(QtWidgets.QSpacerItem(int(25 * width / 756), int(20 * height / 791)))
             self.spacers.append(QtWidgets.QSpacerItem(int(6 * width/756), int(20 * height/791)))
 
     def set_teams(self):
+        """
+        Создаёт пустые поля с названиями команд и именами тренеров
+        """
         self.label = []
         self.teams = []
         self.names = []
@@ -78,6 +93,9 @@ class TeamsDialog:
             self.teams_layout.addLayout(horizontal_layout)
 
     def remove_teams(self):
+        """
+        Удаляет все поля с названиями команд и именами тренеров
+        """
         for item in self.teams:
             self.teams_layout.removeWidget(item)
         for item in self.names:
@@ -88,6 +106,9 @@ class TeamsDialog:
             child.deleteLater()
 
     def update_settings(self):
+        """
+        Обновляет настройки окна в соответствии с текущей лигой, выбранной в главном окне
+        """
         self.remove_teams()
         self.league = self.dialog.league
         self.set_size()
@@ -95,6 +116,11 @@ class TeamsDialog:
         self.retranslate_ui()
 
     def set_size(self):
+        """
+        Задаёт нужную геометрию окна
+        """
+        self.button_widget.setGeometry(QtCore.QRect(int(240 * width/756), int(728 * height/791),
+                                                    int(281 * width/756), int(50 * height/791)))
         self.Main.setGeometry(QtCore.QRect(int(10 * width/756), int(37 * height/791),
                                            int(738 * width/756), int(698 * height/791)))
         self.scrollAreaWidgetContents.setGeometry(

@@ -1,6 +1,5 @@
 from modules.const import numbers, long_seps, seps
-from modules.text_functions import split
-from modules.classes import Better, BetResult, AddBetResult, Result, League
+from modules.classes import Better, BetResult, AddBetResult, Result, BetListError
 
 
 def count_bet(bet1: int, bet2: int, score1: int, score2: int):
@@ -31,45 +30,7 @@ def count_additional(bet: bool, result: bool):
     return AddBetResult((bet == result) & (result != 'None'))
 
 
-def get_players(file, league: League):
-    """
-    Считывает названия команд и имена тренеров из файла, создаёт список объектов класса Better с этими данными
-
-    :param file: путь к файлу
-    :param league: лига игрока
-    :return: список объектов класса Better
-    """
-    array = []
-    text = file.readlines()
-    for line in text:
-        a = split(line, ' - ')
-        b = Better(league, a[0])
-        array.append(b)
-    return array
-
-
-def get_names(betters_array):
-    """
-    Возвращает список названий команд
-
-    :param betters_array: список объектов класса Better
-    :return: список названий команд из полученного списка
-    """
-    return [better.name for better in betters_array]
-
-
-def get_player_names(betters_array):
-    """
-    Возвращает список названий команд с именами игроков
-
-    :param betters_array: список объектов класса Better
-    :return: список названий команд с именами игроков из полученного списка
-    Формат строки в списке: Команда (Имя)
-    """
-    return [better.name + ' (' + better.player_name + ')' for better in betters_array]
-
-
-def count_all_bets(better: Better, bets_list, scores_list, add_bet=None, add_score=None):
+def count_all_bets(better: Better, bets_list: str, scores_list: list[list[int]], add_bet=None, add_score=None):
     """
     Определяет результаты всех ставок игрока
 
@@ -96,7 +57,8 @@ def count_all_bets(better: Better, bets_list, scores_list, add_bet=None, add_sco
     better.set_results(results_list)
 
 
-def count_score(results_team1: list[Result], results_team2: list[Result], field_factor: bool, count, has_additional):
+def count_score(results_team1: list[Result], results_team2: list[Result],
+                field_factor: bool, count: int, has_additional: bool):
     """
     Рассчитывает счёт в матче по спискам результатов каждой ставки
     :param results_team1: список результатов ставок первой команды (объектов класса Result)
@@ -132,7 +94,7 @@ def count_score(results_team1: list[Result], results_team2: list[Result], field_
 
 
 def get_match(match: list[str, str], output_file, errors_file, betters_list: list[Better], field_factor: bool,
-                              match_count, has_additional):
+                              match_count: int, has_additional: bool):
     """
     Считывает матч из строки расписания и выводит его счёт в файл вывода
 
@@ -155,8 +117,8 @@ def get_match(match: list[str, str], output_file, errors_file, betters_list: lis
                               match_count, has_additional)
 
 
-def print_match_score(results_team1, results_team2, name_team1, name_team2, field_factor, output_file, errors_file,
-                              match_count, has_additional):
+def print_match_score(results_team1: list[Result], results_team2: list[Result], name_team1: str, name_team2: str,
+                      field_factor: bool, output_file, errors_file, match_count: int, has_additional: bool):
     """
     Считает и выводит счёт матча из строки расписания в файл вывода, проверяет на случай технического поражения или
     ничьей при ошибках в количестве ставок, выводит сообщение об ошибке в случае недостатка указанных команд
@@ -180,8 +142,8 @@ def print_match_score(results_team1, results_team2, name_team1, name_team2, fiel
             print("Ошибка - недостаточно команд указано", file=errors)
 
 
-def print_match_score_to_file(results_team1, results_team2, name_team1, name_team2, field_factor, output_file,
-                              match_count, has_additional):
+def print_match_score_to_file(results_team1: list[Result], results_team2: list[Result], name_team1: str,
+                              name_team2: str, field_factor, output_file, match_count: int, has_additional: bool):
     """
     Считает и выводит счёт матча из строки расписания в файл вывода, проверяет на случай технического поражения или
     ничьей при ошибках в количестве ставок
@@ -195,20 +157,26 @@ def print_match_score_to_file(results_team1, results_team2, name_team1, name_tea
     :param match_count: количество матчей в госте
     :param has_additional: наличие или отсутствие дополнительной ставки
     """
-    if valid(results_team1):
-        if valid(results_team2):
+    if check_valid(results_team1):
+        if check_valid(results_team2):
             score = count_score(results_team1, results_team2, field_factor, match_count, has_additional)
             print(name_team1, f'{score[0]}-{score[1]}', name_team2, file=output_file)
         else:
             print(name_team1, '3-0', name_team2, '(Тех.)', file=output_file)
     else:
-        if valid(results_team2):
+        if check_valid(results_team2):
             print(name_team1, '0-3', name_team2, '(Тех.)', file=output_file)
         else:
             print(name_team1, '0-0', name_team2, '(Тех.)', file=output_file)
 
 
-def valid(lst: list[Result]):
+def check_valid(lst: list[Result]):
+    """
+    Проверяет, имеется ли хотя бы один результат ставки из списка в наличии
+
+    :param lst: список результатов ставок
+    :return: булево значение - наличие хотя бы одного допустимого результата
+    """
     for i in lst:
         if i.valid:
             return True
@@ -219,6 +187,7 @@ def bets_from_text(text: str):
     """
     Ищет ставки игрока, разделённые символом ":", в тексте госта и возвращает список с ними
 
+    :param text: текст госта (строка)
     :return: Список найденных ставок, каждый элемент которого - список из 2 чисел - ставок на 1 и 2 команды
     """
     array = []
@@ -266,9 +235,10 @@ def check_for_no_errors(text: str, missing: list, count):
     return num == count - missing.count(True) or num == count
 
 
-def config_bets_list(text: str, missing: list, count):
+def config_bets_list(text: str, missing: list, count: int):
     """
     Считывает ставки из текста госта, присланного игроком
+    Выдаёт ошибку в случае, когда в госте присутствует ошибка количестве матчей
 
     :param text: текст госта
     :param missing: список из count элементов - True (ставка отсутствует) или False (ставка есть)
@@ -276,7 +246,7 @@ def config_bets_list(text: str, missing: list, count):
     :return: список ставок игрока
     """
     if not check_for_no_errors(text, missing, count):
-        raise
+        raise BetListError()
     bets_array = find_bet(text)
     array = []
     k = 0

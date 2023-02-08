@@ -1,5 +1,5 @@
 from modules.paths import get_current_league_txt, get_default_settings_txt, get_leagues_txt
-from modules.text_functions import split, get_rid_of_slash_n, change_underscore_to_space, change_space_to_underscore
+from modules.text_functions import get_data, get_rid_of_slash_n, change_underscore_to_space
 from modules.classes import League
 
 
@@ -12,40 +12,31 @@ def get_current_league():
     file = get_current_league_txt()
     with open(file, encoding='utf-8', mode='r') as current:
         text = current.readlines()
-    for line in text:
-        lst = split(line, '=')
-        if lst[0] == 'league':
-            return change_underscore_to_space(lst[1])
+    return get_data(text, "league")
 
 
-def get_default_int_data(txt: str):
+def get_default_int_data(setting: str):
     """
     Находит значение настройки, имеющей целочисленное значение, в файле default_settings.txt
 
-    :param txt: название настройки
+    :param setting: название настройки
     :return: значение настройки
     """
     with open(get_default_settings_txt(), 'r') as default:
         text = default.readlines()
-    for line in text:
-        lst = split(line, '=')
-        if lst[0] == txt:
-            return int(lst[1])
+    return int(get_data(text, setting))
 
 
-def get_default_bool_data(txt: str):
+def get_default_bool_data(setting: str):
     """
     Находит значение настройки, имеющей булево значение, в файле default_settings.txt
 
-    :param txt: название настройки
+    :param setting: название настройки
     :return: значение настройки
     """
     with open(get_default_settings_txt(), 'r') as default:
         text = default.readlines()
-    for line in text:
-        lst = split(line, '=')
-        if lst[0] == txt:
-            return lst[1] == "True"
+    return get_data(text, setting) == "True"
 
 
 def get_max_player_count():
@@ -74,6 +65,8 @@ def get_leagues():
     """
     with open(get_leagues_txt(), encoding='utf-8', mode='r') as leagues:
         text = leagues.readlines()
+
+    # Убирает все пустые строки
     return list(filter(lambda x: x != '', [change_underscore_to_space(get_rid_of_slash_n(line)) for line in text]))
 
 
@@ -88,7 +81,7 @@ def save_leagues(league_list: list[str]):
             print(f'{league}', file=leagues)
 
 
-def set_current_league(league_name: str):
+def save_current_league(league_name: str):
     """
     Сохраняет название текущей лиги в файл
 
@@ -99,6 +92,11 @@ def set_current_league(league_name: str):
 
 
 def set_default_settings(league_name: str):
+    """
+    Задаёт настройки по умолчанию в данной лиге
+
+    :param league_name: название лиги
+    """
     match_count = get_default_int_data('match_count')
     player_count = get_default_int_data('player_count')
     has_additional = get_default_bool_data('has_additional')
@@ -110,5 +108,10 @@ def set_default_settings(league_name: str):
 
 
 def init_files(league_name: str):
+    """
+    Создаёт необходимые файлы для создания данной лиги
+
+    :param league_name: название лиги
+    """
     with open(League(league_name).get_additional_txt(), 'w') as add:
         print('None\n', file=add)

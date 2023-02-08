@@ -121,3 +121,40 @@ def ending_ka(number):
         return 'ки'
     else:
         return 'ок'
+
+
+def remove_final_empty_lines(text: str):
+    """
+    Убирает пустые строки из конца текста
+
+    :param text: текст (строка)
+    :return: обработанный текст
+    """
+    if text:
+        while text[-1] == '\n':
+            text = text[:-1]
+    return text
+
+
+def get_data(text: list[str], parameter: str, sep='='):
+    """
+    Получает значение из текста, в каждой строчке которого данные имеют вид "параметр=значение"
+
+    :param text: текст (список строк)
+    :param parameter: параметр, значение которого требуется получить
+    :param sep: символ, разделяющий значение и параметр в строке
+    :return: значение параметра (строка)
+    """
+    for line in text:
+        lst = split(line, sep)
+        if lst[0] == parameter:
+            return lst[1]
+    raise MissingParameterError()
+
+
+class MissingParameterError(Exception):
+    def __init__(self):
+        """
+        Конструктор класса ошибок при попытке извлечь значение параметра из текста, в котором его нет
+        """
+        super(MissingParameterError, self).__init__("Ошибка: указанный параметр не найден")

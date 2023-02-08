@@ -3,11 +3,11 @@ from PyQt5 import QtCore, QtWidgets
 from modules.const import end_symbol
 from modules.text_functions import get_rid_of_slash_n, check_ascii, check_numbers, ending_ka
 from modules.classes import BetText, Error, Result, League, Better
-from modules.counter_functions import get_players, get_names, get_player_names, config_bets_list, check_for_no_errors,\
-    count_all_bets, get_match, find_bet
+from modules.counter_functions import config_bets_list, check_for_no_errors, count_all_bets, get_match, find_bet
+from modules.file_functions import get_players, get_names, get_player_names
 from modules.custom_config import get_current_league
 
-from windows.main_window_ui import MainWindow
+from windows.main_window_ui import MainWindowUI
 from windows.matches import Matches
 from windows.results import Results
 from windows.teams import Teams
@@ -21,8 +21,8 @@ class Window(QtWidgets.QMainWindow):
         Конструктор класса главного окна
         """
         super().__init__()
-        self.set_league()
-        self.ui = MainWindow(self)
+        self.league = League(get_current_league())
+        self.ui = MainWindowUI(self)
         self.matches = Matches(self, self.league)
         self.teams = Teams(self, self.league)
         self.settings = Settings(self, self.league)
@@ -50,7 +50,6 @@ class Window(QtWidgets.QMainWindow):
     def set_league(self):
         """
         Обновляет текущую лигу в соответствии с пользовательскими настройками
-        :return:
         """
         self.league = League(get_current_league())
 
@@ -163,7 +162,7 @@ class Window(QtWidgets.QMainWindow):
             text = 'None\n' * self.league.get_player_count()
         return text
 
-    def get_goals_and_errors(self, scores):
+    def get_goals_and_errors(self, scores: list[list[int, int]]):
         """
         Анализирует введённые госты на наличие ошибок
         Считает количество забитых командами голов для корректных гостов,
@@ -225,7 +224,7 @@ class Window(QtWidgets.QMainWindow):
                     count = f'({error.number} став' + ending_ka(error.number) + ')'
                     print('Ошибка в госте:', error.name, count, file=output)
             else:
-                print('Ошибок в гостах не найдено.', file=output)
+                print('Ошибок в гостах не найдено', file=output)
 
     def config_matches(self):
         """
@@ -258,7 +257,7 @@ class Window(QtWidgets.QMainWindow):
         self.leagues.show_on_top()
         self.leagues.set_data()
 
-    def set_names(self, name_array, player_name_array):
+    def set_names(self, name_array: list[str], player_name_array: list[str]):
         """
         Устанавливает названия команд на экране, определяет список объектов класса BetText с текстами гостов
 
@@ -275,7 +274,7 @@ class Window(QtWidgets.QMainWindow):
                     better = b
             self.bet_texts.append(BetText(better, self.ui.box_list[i].text, i))
 
-    def get_missing(self, name):
+    def get_missing(self, name: str):
         """
         Определяет, какие матчи в госте данного игрока пропущены
 
@@ -310,7 +309,7 @@ class Window(QtWidgets.QMainWindow):
             text = [get_rid_of_slash_n(add[i]) for i in range(1, len(add), 1)]
             self.open_additional_bets(text)
 
-    def config_bet_texts(self, saves_text):
+    def config_bet_texts(self, saves_text: list[str]):
         """
         Помещает сохранённые тексты гостов в соответствующие окна
 
@@ -345,7 +344,7 @@ class Window(QtWidgets.QMainWindow):
                 if text[i][j] == '1':
                     self.ui.box_list[i].checks[j].setCheckState(QtCore.Qt.Checked)
 
-    def open_additional(self, text):
+    def open_additional(self, text: str):
         """
         Открывает сохранённые данные об исходе дополнительной ставки
         :param text: строка из файла с данными о дополнительной ставке
@@ -504,6 +503,11 @@ class Window(QtWidgets.QMainWindow):
                 self.ui.scores[i][j].setText(get_rid_of_slash_n(score_array[2 * i + j]))
 
     def update_betters_league(self, old_league_name: str, new_league_name: str):
+        """
+        Обновляет лигу всех игроков из списка при переименовании лиги
+        :param old_league_name: старое название лиги
+        :param new_league_name: новое название лиги
+        """
         for better in self.betters:
             if better.league.name == old_league_name:
                 better.league = League(new_league_name)
