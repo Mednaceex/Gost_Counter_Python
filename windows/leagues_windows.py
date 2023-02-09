@@ -20,6 +20,10 @@ class LeagueDialog(Dialog):
         self.ui = LeagueDialogUI(self)
         self.league_name = 'default'
 
+    def connect_buttons(self):
+        self.ui.Cancel_Button.clicked.connect(self.cancel)
+        self.ui.Choose_Button.clicked.connect(self.save)
+
     def open_(self, league_name: str):
         """
         Открывает окно работы с лигой без сообщений об ошибках
@@ -30,72 +34,21 @@ class LeagueDialog(Dialog):
         self.league_name = league_name
         self.ui.error_label.hide()
 
-
-class DeleteDialog(LeagueDialog):
-    def __init__(self, leagues_dialog):
+    def check_new_name(self, new_name: str, league_list: list[str]) -> bool:
         """
-        Конструктор класса окна удаления лиги
-
-        :param leagues_dialog: окно настройки и выбора лиги
+        Проверяет наличие ошибки во введённом названии лиги, в случае наличия выводит на экран сообщение о ней
+        :param new_name: новое название лиги
+        :param league_list: список из названий текущих лиг
+        :return: правильность нового названия лиги (булева переменная)
         """
-        super().__init__(leagues_dialog)
-        self.setWindowTitle("Удаление лиги")
-        self.ui = DeleteDialogUI(self)
-        self.ui.Cancel_Button.clicked.connect(self.close)
-        self.ui.Choose_Button.clicked.connect(self.save)
-
-    def save(self):
-        """
-        Удаляет лигу, удаляет папку лиги, обновляет окно настройки лиг
-        """
-        delete_league_folder(change_space_to_underscore(self.league_name))
-        lst = list(filter(lambda x: x != self.league_name, get_leagues()))
-        save_leagues(lst)
-        self.leagues_dialog.set_data()
-        self.close()
-
-
-class RenameDialog(LeagueDialog):
-    def __init__(self, leagues_dialog):
-        """
-        Конструктор класса окна переименования лиги
-
-        :param leagues_dialog: окно настройки и выбора лиги
-        """
-        super().__init__(leagues_dialog)
-        self.setWindowTitle("Переименование лиги")
-        self.ui = RenameDialogUI(self)
-        self.ui.Choose_Button.clicked.connect(self.save)
-        self.ui.Cancel_Button.clicked.connect(self.cancel)
-
-    def save(self):
-        """
-        Переименовывает лигу или выводит сообщение об ошибке
-        В случае успешного создания закрывает окно, сохраняет данные о переименованной лиге,
-        переименовывает папку лиги
-        Обновляет окно настройки лиг, обновляет названия лиг у объектов главного окна
-        """
-        league_list = get_leagues()
-        text = change_space_to_underscore(check_ascii_russian(self.ui.text_field.text()))
-        if text in league_list:
+        if new_name in league_list:
             self.set_error("Ошибка: лига с таким названием уже существует")
-            return
-        if text == "":
+            return False
+        if new_name == "":
             self.set_error("Ошибка: название лиги не может быть пустым")
-            return
+            return False
         self.hide_error()
-        for i, league in enumerate(league_list):
-            if league == self.league_name:
-                league_list[i] = text
-                break
-        save_leagues(league_list)
-        rename_folder(change_space_to_underscore(self.league_name), text)
-        if get_current_league() == self.league_name:
-            save_current_league(text)
-        self.leagues_dialog.set_data()
-        self.ui.text_field.setText("")
-        self.leagues_dialog.main_window.update_betters_league(self.league_name, text)
-        self.close()
+        return True
 
     def set_error(self, text: str):
         """
@@ -119,6 +72,65 @@ class RenameDialog(LeagueDialog):
         self.ui.text_field.setText("")
         self.close()
 
+    def save(self):
+        pass
+
+
+class DeleteDialog(LeagueDialog):
+    def __init__(self, leagues_dialog):
+        """
+        Конструктор класса окна удаления лиги
+
+        :param leagues_dialog: окно настройки и выбора лиги
+        """
+        super().__init__(leagues_dialog)
+        self.setWindowTitle("Удаление лиги")
+        self.ui = DeleteDialogUI(self)
+        self.connect_buttons()
+
+    def save(self):
+        """
+        Удаляет лигу, удаляет папку лиги, обновляет окно настройки лиг
+        """
+        delete_league_folder(change_space_to_underscore(self.league_name))
+        lst = list(filter(lambda x: x != self.league_name, get_leagues()))
+        save_leagues(lst)
+        self.leagues_dialog.set_data()
+        self.close()
+
+
+class RenameDialog(LeagueDialog):
+    def __init__(self, leagues_dialog):
+        """
+        Конструктор класса окна переименования лиги
+
+        :param leagues_dialog: окно настройки и выбора лиги
+        """
+        super().__init__(leagues_dialog)
+        self.setWindowTitle("Переименование лиги")
+        self.ui = RenameDialogUI(self)
+        self.connect_buttons()
+
+    def save(self):
+        """
+        Переименовывает лигу или выводит сообщение об ошибке
+        В случае успешного создания закрывает окно, сохраняет данные о переименованной лиге,
+        переименовывает папку лиги
+        Обновляет окно настройки лиг, обновляет названия лиг у объектов главного окна
+        """
+        league_list = get_leagues()
+        text = change_space_to_underscore(check_ascii_russian(self.ui.text_field.text()))
+        if not self.check_new_name(text, league_list):
+            return
+        lst = [text if league == self.league_name else league for league in league_list]
+        save_leagues(lst)
+        rename_folder(change_space_to_underscore(self.league_name), text)
+        if get_current_league() == self.league_name:
+            save_current_league(text)
+        self.leagues_dialog.set_data()
+        self.leagues_dialog.main_window.update_betters_league(self.league_name, text)
+        self.cancel()
+
 
 class LeagueDialogUI(ConfirmDialogUI):
     def __init__(self, dialog):
@@ -128,7 +140,6 @@ class LeagueDialogUI(ConfirmDialogUI):
         :param dialog: окно работы с конкретной лигой
         """
         super().__init__(dialog)
-        self.error_label = QtWidgets.QLabel(dialog)
 
     def set_name(self, league_name: str):
         """
@@ -147,12 +158,9 @@ class DeleteDialogUI(LeagueDialogUI):
         """
         super().__init__(dialog)
         dialog.resize(width, height)
-        self.label = QtWidgets.QLabel(dialog)
-        self.label.setAlignment(QtCore.Qt.AlignCenter)
 
         self.set_size()
         self.set_standard_buttons()
-        QtCore.QMetaObject.connectSlotsByName(dialog)
 
     def set_name(self, league_name: str):
         """
@@ -180,15 +188,11 @@ class RenameDialogUI(LeagueDialogUI):
         """
         super().__init__(dialog)
         dialog.resize(width, height)
-        self.label = QtWidgets.QLabel(dialog)
-        self.label.setAlignment(QtCore.Qt.AlignCenter)
-        self.text_field = QtWidgets.QLineEdit(dialog)
+        self.text_field.show()
         self.text_field.setText("")
-        self.error_label.setAlignment(QtCore.Qt.AlignCenter)
 
         self.set_size()
         self.set_standard_buttons()
-        QtCore.QMetaObject.connectSlotsByName(dialog)
 
     def set_name(self, league_name: str):
         """
@@ -211,26 +215,18 @@ class RenameDialogUI(LeagueDialogUI):
             int(10 * width / 410), int(20 * height / 200), int(390 * width / 410), int(40 * height / 200))
 
 
-class AddLeague(Dialog):
+class AddLeague(LeagueDialog):
     def __init__(self, leagues_dialog):
         """
         Конструктор класса окна добавления лиги
 
         :param leagues_dialog: окно настройки и выбора лиги
         """
-        super().__init__()
+        super().__init__(leagues_dialog)
         self.ui = AddLeagueUI(self)
         self.leagues_dialog = leagues_dialog
         self.setWindowTitle("Добавление новой лиги")
-        self.ui.Choose_Button.clicked.connect(self.save)
-        self.ui.Cancel_Button.clicked.connect(self.cancel)
-
-    def cancel(self):
-        """
-        Закрывает окно и очищает поле ввода
-        """
-        self.ui.text_field.setText("")
-        self.close()
+        self.connect_buttons()
 
     def save(self):
         """
@@ -241,36 +237,15 @@ class AddLeague(Dialog):
         """
         league_list = get_leagues()
         text = change_space_to_underscore(check_ascii_russian(self.ui.text_field.text()))
-        if text in league_list:
-            self.set_error("Ошибка: лига с таким названием уже существует")
+        if not self.check_new_name(text, league_list):
             return
-        if text == "":
-            self.set_error("Ошибка: название лиги не может быть пустым")
-            return
-        self.hide_error()
         init_league(text)
         set_default_settings(text)
         init_files(text)
         league_list.append(text)
         save_leagues(league_list)
         self.leagues_dialog.set_data()
-        self.ui.text_field.setText("")
-        self.close()
-
-    def set_error(self, text: str):
-        """
-        Отображает сообщение об ошибке и устанавливает нужный текст
-
-        :param text: текст сообщения
-        """
-        self.ui.error_label.show()
-        self.ui.error_label.setText(text)
-
-    def hide_error(self):
-        """
-        Скрывает сообщение об ошибке
-        """
-        self.ui.error_label.hide()
+        self.cancel()
 
 
 class AddLeagueUI(ConfirmDialogUI):
@@ -282,22 +257,13 @@ class AddLeagueUI(ConfirmDialogUI):
         """
         super().__init__(dialog)
         dialog.resize(width, height)
-        self.label = QtWidgets.QLabel(dialog)
-        self.label.setAlignment(QtCore.Qt.AlignCenter)
         self.text_field = QtWidgets.QLineEdit(dialog)
-        self.error_label = QtWidgets.QLabel(dialog)
-        self.error_label.setAlignment(QtCore.Qt.AlignCenter)
 
         self.set_size()
-        self.retranslate_ui()
-        QtCore.QMetaObject.connectSlotsByName(dialog)
-
-    def retranslate_ui(self):
-        _translate = QtCore.QCoreApplication.translate
         self.label.setText("Введите название новой лиги:")
         self.text_field.setText("")
-        self.Choose_Button.setText(_translate("Dialog", "Добавить"))
-        self.Cancel_Button.setText(_translate("Dialog", "Отмена"))
+        self.Choose_Button.setText("Добавить")
+        self.Cancel_Button.setText("Отмена")
 
     def set_size(self):
         """

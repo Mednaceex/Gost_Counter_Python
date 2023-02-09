@@ -17,12 +17,12 @@ class TeamsUI(ConfirmDialogUI):
         dialog.resize(width, height)
 
         # Задание основного виджета и области с прокруткой
-        self.Main = QtWidgets.QScrollArea(dialog)
-        self.scrollAreaWidgetContents = QtWidgets.QWidget(dialog)
+        self.scroll_area = QtWidgets.QScrollArea(dialog)
+        self.scroll_area_contents = QtWidgets.QWidget(dialog)
         self.title_widget = QtWidgets.QWidget(dialog)
-        self.Main.setStyleSheet("border: 0")
-        self.Main.setWidgetResizable(False)
-        self.Main.setWidget(self.scrollAreaWidgetContents)
+        self.scroll_area.setStyleSheet("border: 0")
+        self.scroll_area.setWidgetResizable(False)
+        self.scroll_area.setWidget(self.scroll_area_contents)
 
         # Инициализация атрибутов класса
         self.spacers = []
@@ -31,35 +31,27 @@ class TeamsUI(ConfirmDialogUI):
         self.names = []
 
         # Создание заголовочного виджета с подписями "Название команды" и "Тренер"
-        self.horizontalLayoutWidget = QtWidgets.QWidget(dialog)
         self.spacing_layout = QtWidgets.QVBoxLayout()
-        self.spacing_layout.setContentsMargins(-1, -1, -1, 0)
-        self.spacing_layout.setSpacing(int(8 * height/791))
-        size_policy_preferred = QtWidgets.QSizePolicy(QtWidgets.QSizePolicy.Preferred, QtWidgets.QSizePolicy.Preferred)
-        size_policy_preferred.setHorizontalStretch(0)
-        size_policy_preferred.setVerticalStretch(0)
         self.title_layout = QtWidgets.QHBoxLayout(self.title_widget)
-        self.title_layout.setContentsMargins(-1, -1, -1, 0)
-        self.title_layout.setSpacing(0)
-        self.label_team_name = QtWidgets.QLabel(self.horizontalLayoutWidget)
+        self.label_team_name = QtWidgets.QLabel(self.title_widget)
         self.title_layout.addWidget(self.label_team_name, 0, QtCore.Qt.AlignHCenter | QtCore.Qt.AlignVCenter)
-        self.label_coach_name = QtWidgets.QLabel(self.horizontalLayoutWidget)
+        self.label_coach_name = QtWidgets.QLabel(self.title_widget)
         self.title_layout.addWidget(self.label_coach_name, 0, QtCore.Qt.AlignHCenter | QtCore.Qt.AlignVCenter)
-        self.teams_layout = QtWidgets.QVBoxLayout(self.scrollAreaWidgetContents)
+        self.teams_layout = QtWidgets.QVBoxLayout(self.scroll_area_contents)
 
         self.set_teams()  # Создание строк для ввода команд
         self.set_size()
         self.set_standard_buttons()
+        self.set_label_names()
+        self.label_team_name.setText("Название команды")
+        self.label_coach_name.setText("Тренер")
 
-        self._translate = QtCore.QCoreApplication.translate
-        self.retranslate_ui()
-        QtCore.QMetaObject.connectSlotsByName(dialog)
-
-    def retranslate_ui(self):
+    def set_label_names(self):
+        """
+        Помещает текст на подписи с номерами команд
+        """
         for i in range(self.league.get_player_count()):
-            self.label[i].setText(self._translate("Dialog", f"{i + 1}."))
-        self.label_team_name.setText(self._translate("Dialog", "Название команды"))
-        self.label_coach_name.setText(self._translate("Dialog", "Тренер"))
+            self.label[i].setText(f"{i + 1}.")
 
     def set_spacers(self):
         """
@@ -79,12 +71,12 @@ class TeamsUI(ConfirmDialogUI):
         self.names = []
         self.set_spacers()
         for i in range(self.league.get_player_count()):
-            horizontal_layout = QtWidgets.QHBoxLayout(self.scrollAreaWidgetContents)
-            self.label.append(QtWidgets.QLabel(self.scrollAreaWidgetContents))
-            self.label[i].setFixedWidth(20)
+            horizontal_layout = QtWidgets.QHBoxLayout(self.scroll_area_contents)
+            self.label.append(QtWidgets.QLabel(self.scroll_area_contents))
+            self.label[i].setFixedWidth(int(24 * width/756))
             horizontal_layout.addWidget(self.label[i])
             for line_list in (self.teams, self.names):
-                line_list.append(QtWidgets.QLineEdit(self.scrollAreaWidgetContents))
+                line_list.append(QtWidgets.QLineEdit(self.scroll_area_contents))
             horizontal_layout.addWidget(self.teams[i])
             horizontal_layout.addItem(self.spacers[2*i])
             horizontal_layout.addWidget(self.names[i])
@@ -111,9 +103,9 @@ class TeamsUI(ConfirmDialogUI):
         """
         self.remove_teams()
         self.league = self.dialog.league
-        self.set_size()
         self.set_teams()
-        self.retranslate_ui()
+        self.set_size()
+        self.set_label_names()
 
     def set_size(self):
         """
@@ -121,10 +113,14 @@ class TeamsUI(ConfirmDialogUI):
         """
         self.button_widget.setGeometry(QtCore.QRect(int(240 * width/756), int(728 * height/791),
                                                     int(281 * width/756), int(50 * height/791)))
-        self.Main.setGeometry(QtCore.QRect(int(10 * width/756), int(37 * height/791),
-                                           int(738 * width/756), int(698 * height/791)))
-        self.scrollAreaWidgetContents.setGeometry(
+        self.scroll_area.setGeometry(QtCore.QRect(int(10 * width/756), int(37 * height/791),
+                                                  int(738 * width/756), int(698 * height/791)))
+        self.scroll_area_contents.setGeometry(
             QtCore.QRect(int(10 * width/756), 0, int(715 * width/756),
                          int(742 * height * self.league.get_player_count()/15820)))
         self.title_widget.setGeometry(QtCore.QRect(int(10 * width/756), int(2 * height/791),
                                                    int(738 * width/756), int(30 * height/791)))
+        self.title_layout.setContentsMargins(-1, -1, -1, 0)
+        self.spacing_layout.setContentsMargins(-1, -1, -1, 0)
+        self.spacing_layout.setSpacing(int(8 * height/791))
+        self.title_layout.setSpacing(0)

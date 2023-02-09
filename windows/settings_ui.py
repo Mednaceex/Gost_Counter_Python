@@ -17,7 +17,6 @@ class SettingsUI(ConfirmDialogUI):
         """
         super().__init__(dialog)
         dialog.resize(width, height)
-
         self.central_widget = QtWidgets.QWidget(dialog)
 
         self.player_count = Line(self.central_widget, QtWidgets.QLineEdit(self.central_widget))
@@ -28,18 +27,13 @@ class SettingsUI(ConfirmDialogUI):
 
         self.set_size()
         self.set_standard_buttons()
-        self.retranslate_ui()
-        QtCore.QMetaObject.connectSlotsByName(dialog)
-
-    def retranslate_ui(self):
-        _translate = QtCore.QCoreApplication.translate
-        self.player_count.label.setText(_translate("Dialog", "Количество игроков"))
-        self.match_count.label.setText(_translate("Dialog", "Количество матчей в госте"))
-        self.has_additional.label.setText(_translate("Dialog", "Дополнительная ставка"))
-        # self.auto_update.label.setText(_translate("Dialog", "Автоматическая проверка обновлений (в разработке)"))
-        # self.auto_update.hint_label.setText(_translate("Dialog", "При отключении этой опции вы сможете\n"
-        # "проверить наличие обновлений здесь: (в разработке)"))
-        # self.auto_update.hint_widget.setText(_translate("Dialog", "Проверить обновления"))
+        self.player_count.label.setText("Количество игроков")
+        self.match_count.label.setText("Количество матчей в госте")
+        self.has_additional.label.setText("Дополнительная ставка")
+        # self.auto_update.label.setText("Автоматическая проверка обновлений (в разработке)")
+        # self.auto_update.hint_label.setText("При отключении этой опции вы сможете\n"
+        # "проверить наличие обновлений здесь: (в разработке)")
+        # self.auto_update.hint_widget.setText("Проверить обновления")
 
     def set_size(self):
         """

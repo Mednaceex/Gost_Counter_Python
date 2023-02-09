@@ -21,13 +21,8 @@ class ResultsUI(ConfirmDialogUI):
         self.Copied_Label.setAlignment(QtCore.Qt.AlignCenter)
 
         self.set_size()
-        self.retranslate_ui()
-        QtCore.QMetaObject.connectSlotsByName(dialog)
-
-    def retranslate_ui(self):
-        _translate = QtCore.QCoreApplication.translate
-        self.Choose_Button.setText(_translate("Dialog", "Копировать"))
-        self.Cancel_Button.setText(_translate("Dialog", "Выход"))
+        self.Choose_Button.setText("Копировать")
+        self.Cancel_Button.setText("Выход")
 
     def set_size(self):
         """

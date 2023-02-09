@@ -86,7 +86,7 @@ class Window(QtWidgets.QMainWindow):
             print(self.save_scores(), file=score)
         self.save_checks(self.league.get_checks_txt())
         with open(self.league.get_additional_txt(), 'w') as add:
-            print(self.save_additional(), file=add)
+            print(self.get_add_result(), file=add)
             print(self.save_additional_bets(), file=add)
 
     def count(self):
@@ -386,20 +386,17 @@ class Window(QtWidgets.QMainWindow):
         :param name: название команды
         :return: результат ставки или 'None' если он не указан
         """
-        if self.league.get_has_additional():
-            i = 0
-            for bet_text in self.bet_texts:
-                if bet_text.name == name:
-                    i = bet_text.number
-            if self.ui.box_list[i].add_yes.isChecked():
-                return 'True'
-            else:
-                if self.ui.box_list[i].add_no.isChecked():
-                    return 'False'
-                else:
-                    return 'None'
-        else:
+        if not self.league.get_has_additional():
             return 'None'
+        i = 0
+        for bet_text in self.bet_texts:
+            if bet_text.name == name:
+                i = bet_text.number
+        if self.ui.box_list[i].add_yes.isChecked():
+            return 'True'
+        if self.ui.box_list[i].add_no.isChecked():
+            return 'False'
+        return 'None'
 
     def get_add_result(self):
         """
@@ -407,16 +404,13 @@ class Window(QtWidgets.QMainWindow):
 
         :return: результат ставки или 'None' если он не указан
         """
-        if self.league.get_has_additional():
-            if self.ui.add_yes_box.isChecked():
-                return 'True'
-            else:
-                if self.ui.add_no_box.isChecked():
-                    return 'False'
-                else:
-                    return 'None'
-        else:
+        if not self.league.get_has_additional():
             return 'None'
+        if self.ui.add_yes_box.isChecked():
+            return 'True'
+        if self.ui.add_no_box.isChecked():
+            return 'False'
+        return 'None'
 
     def save_scores(self):
         """
@@ -430,30 +424,13 @@ class Window(QtWidgets.QMainWindow):
             text += score[0] + '\n' + score[1] + '\n'
         return text
 
-    def save_additional(self):
-        """
-        Возвращает результат дополнительной ставки в текстовом виде для сохранения в файл
-        """
-        if self.league.get_has_additional():
-            if self.ui.add_yes_box.isChecked():
-                text = 'True'
-            else:
-                if self.ui.add_no_box.isChecked():
-                    text = 'False'
-                else:
-                    text = 'None'
-        else:
-            text = 'None'
-        return text
-
     def clear_scores(self):
         """
         Очищает поля для ввода счетов матчей
         """
-        empty = ''
         for i in range(self.league.get_match_count()):
             for j in range(2):
-                self.ui.scores[i][j].setText(empty)
+                self.ui.scores[i][j].setText('')
 
     def clear_checks(self):
         """

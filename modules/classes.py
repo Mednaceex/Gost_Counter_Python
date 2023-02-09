@@ -238,6 +238,13 @@ class ConfirmDialogUI:
 
         :param dialog: диалоговое окно
         """
+        self.label = QtWidgets.QLabel(dialog)
+        self.label.setAlignment(QtCore.Qt.AlignCenter)
+        self.error_label = QtWidgets.QLabel(dialog)
+        self.error_label.setAlignment(QtCore.Qt.AlignCenter)
+        self.text_field = QtWidgets.QLineEdit(dialog)
+        self.text_field.hide()
+
         self.button_widget = QtWidgets.QWidget(dialog)
         self.button_layout = QtWidgets.QHBoxLayout(self.button_widget)
         self.button_layout.removeWidget(self.button_widget)

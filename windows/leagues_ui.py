@@ -33,13 +33,8 @@ class LeaguesUI(ConfirmDialogUI):
         self.error_label.setAlignment(QtCore.Qt.AlignCenter)
 
         self.set_size()
-        self.retranslate_ui()
-        QtCore.QMetaObject.connectSlotsByName(dialog)
-
-    def retranslate_ui(self):
-        _translate = QtCore.QCoreApplication.translate
-        self.Choose_Button.setText(_translate("Dialog", "Добавить лигу"))
-        self.Cancel_Button.setText(_translate("Dialog", "Выход"))
+        self.Choose_Button.setText("Добавить лигу")
+        self.Cancel_Button.setText("Выход")
 
     def set_current_label(self, league_name: str):
         """

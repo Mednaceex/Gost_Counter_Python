@@ -20,7 +20,7 @@ def count_bet(bet1: int, bet2: int, score1: int, score2: int):
     return BetResult(winner, diff, exact)
 
 
-def count_additional(bet: bool, result: bool):
+def count_additional(bet: str, result: str):
     """
     Определяет и возвращает количество голов, забитых на дополнительной ставке
 

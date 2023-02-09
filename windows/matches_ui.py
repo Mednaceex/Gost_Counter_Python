@@ -17,25 +17,23 @@ class MatchesUI(ConfirmDialogUI):
         self.dialog = dialog
         dialog.resize(width, height)
         self.league = dialog.league
-        self.central_widget = QtWidgets.QWidget(dialog)
 
-        self.Main = QtWidgets.QScrollArea(self.central_widget)
-        self.Main.setStyleSheet("border: 0")
-        self.Main.setWidgetResizable(False)
-        self.scrollAreaWidgetContents = QtWidgets.QWidget(self.Main)
-        self.Main.setWidget(self.scrollAreaWidgetContents)
+        self.scroll_area = QtWidgets.QScrollArea(dialog)
+        self.scroll_area.setStyleSheet("border: 0")
+        self.scroll_area.setWidgetResizable(False)
+        self.scroll_area_contents = QtWidgets.QWidget(self.scroll_area)
+        self.scroll_area.setWidget(self.scroll_area_contents)
 
-        self.verticalLayoutWidget = QtWidgets.QWidget(self.scrollAreaWidgetContents)
-        self.verticalLayout = QtWidgets.QVBoxLayout(self.verticalLayoutWidget)
+        self.matches_widget = QtWidgets.QWidget(self.scroll_area_contents)
+        self.matches_layout = QtWidgets.QVBoxLayout(self.matches_widget)
 
         self.teams = []
         self.init_combo_boxes()
-        self.field_factor = Line(self.scrollAreaWidgetContents, QtWidgets.QCheckBox(self.scrollAreaWidgetContents))
+        self.field_factor = Line(self.scroll_area_contents, QtWidgets.QCheckBox(self.scroll_area_contents))
 
         self.set_size()
         self.set_standard_buttons()
-        self.field_factor.label.setText(QtCore.QCoreApplication.translate("Dialog", "Домашний фактор"))
-        QtCore.QMetaObject.connectSlotsByName(dialog)
+        self.field_factor.label.setText("Домашний фактор")
 
     def update_settings(self):
         """
@@ -52,7 +50,7 @@ class MatchesUI(ConfirmDialogUI):
         """
         for pair in self.teams:
             for item in pair:
-                self.verticalLayout.removeWidget(item)
+                self.matches_layout.removeWidget(item)
 
     def init_combo_boxes(self):
         """
@@ -63,10 +61,10 @@ class MatchesUI(ConfirmDialogUI):
             self.teams.append([])
             horizontal_layout = QtWidgets.QHBoxLayout()
             for j in range(2):
-                box = QtWidgets.QComboBox(self.verticalLayoutWidget)
+                box = QtWidgets.QComboBox(self.matches_widget)
                 self.teams[i].append(box)
                 horizontal_layout.addWidget(self.teams[i][j])
-            self.verticalLayout.addLayout(horizontal_layout)
+            self.matches_layout.addLayout(horizontal_layout)
 
     def set_size(self):
         """
@@ -74,13 +72,13 @@ class MatchesUI(ConfirmDialogUI):
         """
         self.button_widget.setGeometry(QtCore.QRect(int(310 * width/924), int(540 * height/667),
                                                     int(281 * width/924), int(52 * height/667)))
-        self.verticalLayoutWidget.setGeometry(QtCore.QRect(
+        self.matches_widget.setGeometry(QtCore.QRect(
             int(5 * width/924), int(0 * height/667), int(826 * width/924),
             int(481 * height * (self.league.get_player_count()/2) / 6670)))
         self.field_factor.align(int(32 * width / 924), int(160 * width / 924),
                                 int(((481 * (self.league.get_player_count()/2)) - 50) * height / 6670),
                                 int(555 * width / 924), int(20 * height / 667))
-        self.Main.setGeometry(QtCore.QRect(int(20 * width/924), int(10 * height/667),
-                                           int(875 * width/924), int(526 * height/667)))
-        self.scrollAreaWidgetContents.setGeometry(QtCore.QRect(
+        self.scroll_area.setGeometry(QtCore.QRect(int(20 * width/924), int(10 * height/667),
+                                                  int(875 * width/924), int(526 * height/667)))
+        self.scroll_area_contents.setGeometry(QtCore.QRect(
             0, 0, int(840 * width/924), int((481 * (self.league.get_player_count()/2) + 350) * height / 6670)))
